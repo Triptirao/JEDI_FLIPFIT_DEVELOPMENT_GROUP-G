@@ -1,49 +1,57 @@
 package com.flipfit.business;
 
-import com.flipfit.bean.Customer;
-import com.flipfit.bean.GymCentre;
-import com.flipfit.bean.Payment;
+import com.flipfit.dao.GymOwnerDAO;
+
 import java.util.List;
 import java.util.Scanner;
 
 public class GymOwnerService {
 
     private static final Scanner in = new Scanner(System.in);
+    private GymOwnerDAO gymOwnerDao;
 
-    public void addCentre() {
-        // Now just prints, no bean used
-        System.out.println("Adding new gym centre... ");
+    public GymOwnerService() {
+        this.gymOwnerDao = new GymOwnerDAO();
     }
 
-    public List<GymCentre> viewGymDetails() {
+    public void addCentre(String[] gymData) {
+        gymOwnerDao.addGym(gymData);
+        System.out.println("Adding new gym centre: " + gymData[2]);
+    }
+
+    public void viewGymDetails() {
         System.out.println("Fetching details for all your gym centres...");
-        // Dummy data for demonstration
+        List<String[]> gyms = gymOwnerDao.getGymsByOwnerId("owner123");
+
         System.out.println("------------------------------------------------------------------");
         System.out.printf("%-15s %-20s %-20s %n", "Gym ID", "Name", "Location");
         System.out.println("------------------------------------------------------------------");
-        System.out.printf("%-15s %-20s %-20s %n", "G101", "Fit Hub", "Pune");
-        System.out.printf("%-15s %-20s %-20s %n", "G102", "Powerhouse", "Mumbai");
+        if (gyms.isEmpty()) {
+            System.out.println("No gym centers found.");
+        } else {
+            for (String[] gym : gyms) {
+                System.out.printf("%-15s %-20s %-20s %n", gym[0], gym[2], gym[5] + ", " + gym[6]);
+            }
+        }
         System.out.println("------------------------------------------------------------------");
-        return null;
     }
 
-    public List<Customer> viewCustomers() {
+    public void viewCustomers() {
         System.out.println("Fetching customer list for your gym centres...");
-        return null;
+        // This would call a method in a CustomerDAO
+        System.out.println("No customers found.");
     }
 
-    public List<Payment> viewPayments() {
+    public void viewPayments() {
         System.out.println("Fetching payment history...");
-        return null;
+        System.out.println("No payments found.");
     }
 
-    public void editDetails() {
-        // This method will now be handled by the nested menu in gymOwnerMenu
+    public void editGymOwnerDetails(String ownerId, int choice, String newValue) {
+        gymOwnerDao.updateGymOwnerDetails(ownerId, choice, newValue);
+        System.out.println("Owner details updated successfully.");
     }
 
-    /**
-     * This method handles the entire gym owner menu flow with nested loops.
-     */
     public void displayGymOwnerMenu() {
         boolean exitOwnerMenu = false;
         while (!exitOwnerMenu) {
@@ -61,18 +69,25 @@ public class GymOwnerService {
 
             switch (choice) {
                 case 1:
-                    // Nested loop for adding a new gym centre
                     boolean continueAdding = true;
                     while (continueAdding) {
                         System.out.println("\n--- Add a New Gym Centre ---");
+                        System.out.print("Enter gym ID: ");
+                        String gymId = in.nextLine();
+                        System.out.print("Enter owner ID: ");
+                        String ownerId = in.nextLine();
                         System.out.print("Enter gym name: ");
                         String name = in.nextLine();
+                        System.out.print("Enter gym capacity: ");
+                        String capacity = in.nextLine();
                         System.out.print("Enter gym city: ");
                         String city = in.nextLine();
                         System.out.print("Enter gym state: ");
                         String state = in.nextLine();
-                        // Call method without passing a bean
-                        addCentre();
+
+                        String[] newGymData = new String[]{gymId, ownerId, name, capacity, "false", city, state};
+                        addCentre(newGymData);
+
                         System.out.println("Gym Centre with name " + name + " and location " + city + ", " + state + " added. Do you want to add another? (yes/no)");
                         String response = in.nextLine();
                         if (response.equalsIgnoreCase("no")) {
@@ -90,34 +105,72 @@ public class GymOwnerService {
                     viewPayments();
                     break;
                 case 5:
-                    // Nested menu for editing details
                     boolean continueEditing = true;
                     while (continueEditing) {
                         System.out.println("\n--- Edit My Details ---");
                         System.out.println("1. Change Name");
-                        System.out.println("2. Change City");
-                        System.out.println("3. Change State");
-                        System.out.println("4. Back to main menu");
+                        System.out.println("2. Change Email");
+                        System.out.println("3. Change Password");
+                        System.out.println("4. Change Phone Number");
+                        System.out.println("5. Change City");
+                        System.out.println("6. Change Pincode");
+                        System.out.println("7. Change PAN");
+                        System.out.println("8. Change Aadhaar");
+                        System.out.println("9. Change GST");
+                        System.out.println("10. Back to main menu");
                         System.out.print("Enter your choice: ");
                         int editChoice = in.nextInt();
                         in.nextLine(); // Consume newline
+                        String ownerId = "1"; // Placeholder ownerId.
+                        String newValue;
+
                         switch (editChoice) {
                             case 1:
                                 System.out.print("Enter new name: ");
-                                String newName = in.nextLine();
-                                System.out.println("Name changed to: " + newName);
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 1, newValue);
                                 break;
                             case 2:
-                                System.out.print("Enter new city: ");
-                                String newCity = in.nextLine();
-                                System.out.println("City changed to: " + newCity);
+                                System.out.print("Enter new email: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 2, newValue);
                                 break;
                             case 3:
-                                System.out.print("Enter new state: ");
-                                String newState = in.nextLine();
-                                System.out.println("State changed to: " + newState);
+                                System.out.print("Enter new password: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 3, newValue);
                                 break;
                             case 4:
+                                System.out.print("Enter new phone number: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 4, newValue);
+                                break;
+                            case 5:
+                                System.out.print("Enter new city: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 5, newValue);
+                                break;
+                            case 6:
+                                System.out.print("Enter new pincode: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 6, newValue);
+                                break;
+                            case 7:
+                                System.out.print("Enter new PAN: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 7, newValue);
+                                break;
+                            case 8:
+                                System.out.print("Enter new Aadhaar: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 8, newValue);
+                                break;
+                            case 9:
+                                System.out.print("Enter new GST: ");
+                                newValue = in.nextLine();
+                                editGymOwnerDetails(ownerId, 9, newValue);
+                                break;
+                            case 10:
                                 continueEditing = false;
                                 break;
                             default:

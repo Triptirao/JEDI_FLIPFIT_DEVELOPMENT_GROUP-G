@@ -1,20 +1,27 @@
 package com.flipfit.business;
 
-import com.flipfit.bean.GymCentre;
-import com.flipfit.bean.GymOwner;
-
-import java.util.ArrayList;
+import com.flipfit.dao.AdminDAO;
+import com.flipfit.dao.CustomerDAO;
 import java.util.List;
 import java.util.Scanner;
 
 public class AdminService {
 
+    private static final Scanner in = new Scanner(System.in);
+    private AdminDAO adminDao;
+    private CustomerDAO customerDao;
+
+    public AdminService() {
+        this.adminDao = new AdminDAO();
+        this.customerDao = new CustomerDAO();
+    }
+
     /**
      * Approves a pending gym center request.
      * @param gymId The ID of the gym center to approve.
      */
-    public void approveGymRequest(int gymId) {
-        // Business logic to find the gym center and update its status to 'approved'.
+    public void approveGymRequest(String gymId) {
+        adminDao.approveGymRequest(gymId);
         System.out.println("Gym with ID " + gymId + " approved successfully.");
     }
 
@@ -23,170 +30,179 @@ public class AdminService {
      * @param email The email of the gym owner to approve.
      */
     public void approveGymOwnerRequest(String email) {
-        // Business logic to find the gym owner and update their status to 'approved'.
+        adminDao.approveGymOwnerRequest(email);
         System.out.println("Gym owner with email " + email + " approved successfully.");
     }
 
-    public void pendingGyms() {
-        System.out.println("Fetching all pending gyms requests...");
-
-        String[][] requests = {
-                {"1", "name1", "gym1"},
-                {"2", "name2", "gym2"},
-                {"3", "name3", "gym3"},
-                {"4", "name4", "gym4"},
-                {"5", "name5", "gym5"}
-        };
-
-        Scanner scanner = new Scanner(System.in);
-
-        for (int i = 0; i < requests.length; i++) {
-            String[] request = requests[i];
-            System.out.println("\n--- Request " + (i + 1) + " ---");
-            System.out.println("User ID: " + request[0]);
-            System.out.println("Gym Owner: " + request[1]);
-            System.out.println("Gym Name: " + request[2]);
-            System.out.print("Enter 'A' to approve, 'R' to reject and anything else to ignore: ");
-
-            String scannerInput = scanner.nextLine().toUpperCase();
-
-            if ("A".equals(scannerInput)) {
-                System.out.println("Request successfully approved! ");
-            } else if ("R".equals(scannerInput)) {
-                System.out.println("Request rejected. Please provide a reason:");
-                String reason = scanner.nextLine();
-                System.out.println("Reason: " + reason);
-            } else {
-                System.out.println("Invalid input. Request remains pending.");
-            }
+    public void viewPendingGyms() {
+        System.out.println("Fetching all pending gym requests...");
+        List<String[]> pendingGyms = adminDao.getPendingGymRequests();
+        if (pendingGyms.isEmpty()) {
+            System.out.println("No pending gym requests found.");
+            return;
         }
+
+        System.out.println("--------------------------------------------------");
+        System.out.printf("%-10s %-20s %-15s%n", "ID", "Name", "City");
+        System.out.println("--------------------------------------------------");
+        for (String[] gym : pendingGyms) {
+            System.out.printf("%-10s %-20s %-15s%n", gym[0], gym[2], gym[6]);
+        }
+        System.out.println("--------------------------------------------------");
+    }
+
+    public void viewPendingGymOwners() {
+        System.out.println("Fetching all pending gym owner requests...");
+        List<String[]> pendingOwners = adminDao.getPendingGymOwnerRequests();
+        if (pendingOwners.isEmpty()) {
+            System.out.println("No pending gym owners found.");
+            return;
+        }
+
+        System.out.println("--------------------------------------------------");
+        System.out.printf("%-30s %-20s %-15s%n", "Email", "Name", "Approved");
+        System.out.println("--------------------------------------------------");
+        for (String[] owner : pendingOwners) {
+            System.out.printf("%-30s %-20s %-15s%n", owner[3], owner[2], owner[11].equals("true") ? "Yes" : "No");
+        }
+        System.out.println("--------------------------------------------------");
     }
 
     public void viewAllGyms() {
         System.out.println("Fetching all registered gym centers...");
+        List<String[]> allGyms = adminDao.getAllGyms();
 
-        List<String> facilitiesGym1 = List.of("Cardio", "Weights", "Showers");
-        GymCentre gym1 = new GymCentre(
-                1, 101, "Fitness Hub", List.of("slot1", "slot2","slot3"),50, true,
-                "Bengaluru", "Karnataka", "600001", facilitiesGym1
-        );
-
-        List<String> facilitiesGym2 = List.of("Yoga", "Pool", "Sauna");
-        GymCentre gym2 = new GymCentre(
-                2, 102, "Zenith Fitness", List.of("slot1", "slot2","slot3"),75, true,
-                "Bengaluru", "Karnataka", "560001", facilitiesGym2
-        );
-
-        // Add the dummy gyms to a list
-        List<GymCentre> allGyms = new ArrayList<>();
-        allGyms.add(gym1);
-        allGyms.add(gym2);
-
-        // Loop through the list and print details for each gym
         System.out.println("Displaying all registered gym centers:");
-        for (GymCentre gym : allGyms) {
+        for (String[] gym : allGyms) {
             System.out.println("------------------------------------");
-            System.out.println("Centre ID: " + gym.getCentreId());
-            System.out.println("Owner ID: " + gym.getOwnerId());
-            System.out.println("Name: " + gym.getName());
-            System.out.println("Capacity: " + gym.getCapacity());
-            System.out.println("City: " + gym.getCity());
-            System.out.println("State: " + gym.getState());
-            System.out.println("Pincode: " + gym.getPincode());
-            System.out.println("Slots: " + gym.getSlots());
-            System.out.println("Facilities: " + gym.getFacilities());
+            System.out.println("Centre ID: " + gym[0]);
+            System.out.println("Owner ID: " + gym[1]);
+            System.out.println("Name: " + gym[2]);
+            System.out.println("Capacity: " + gym[4]);
+            System.out.println("City: " + gym[6]);
+            System.out.println("State: " + gym[7]);
+            System.out.println("Pincode: " + gym[8]);
+            System.out.println("Slots: " + gym[3]);
+            System.out.println("Facilities: " + gym[9]);
             System.out.println("------------------------------------");
         }
     }
 
     public void viewAllGymOwners() {
         System.out.println("Fetching all registered gym owners...");
+        List<String[]> allOwners = adminDao.getAllGymOwners();
 
-        GymOwner owner1 = new GymOwner(
-                "OWNER", 1, "Ravi Sharma", "ravi.sharma@example.com", "secure123",
-                9876543210L, "Bengaluru", 560001,
-                "ABCDE1234F", "123456789012", "29ABCDE1234F1Z5"
-        );
-
-        // Dummy user 2
-        GymOwner owner2 = new GymOwner(
-                "OWNER", 2, "Priya Singh", "priya.singh@example.com", "mysecretpass",
-                8765432109L, "Mumbai", 400001,
-                "FGHIJ5678K", "987654321098", "27FGHIJ5678K1Z3"
-        );
-
-        // Add the dummy gym owners to a list
-        List<GymOwner> allOwners = new ArrayList<>();
-        allOwners.add(owner1);
-        allOwners.add(owner2);
-
-        // Loop through the list and print details for each gym owner
-        System.out.println("Displaying all registered gym centers:");
-        for (GymOwner owner : allOwners) {
+        System.out.println("Displaying all registered gym owners:");
+        for (String[] owner : allOwners) {
             System.out.println("------------------------------------");
-            System.out.println("User ID: " + owner.getUserId());
-            System.out.println("Full Name: " + owner.getName());
-            System.out.println("Email: " + owner.getEmail());
-            System.out.println("Phone number: " + owner.getUserPhone());
-            System.out.println("City: " + owner.getCity());
-            System.out.println("Pincode: " + owner.getPinCode());
-            System.out.println("PAN: " + owner.getPan());
-            System.out.println("Aadhaar: " + owner.getAadhaar());
-            System.out.println("GST: " + owner.getGst());
+            System.out.println("User ID: " + owner[1]);
+            System.out.println("Full Name: " + owner[2]);
+            System.out.println("Email: " + owner[3]);
+            System.out.println("Phone number: " + owner[5]);
+            System.out.println("City: " + owner[6]);
+            System.out.println("Pincode: " + owner[7]);
+            System.out.println("PAN: " + owner[8]);
+            System.out.println("Aadhaar: " + owner[9]);
+            System.out.println("GST: " + owner[10]);
             System.out.println("------------------------------------");
         }
     }
 
-    public void displayAdminMenu() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("\n*** Welcome, Admin! ***");
+    public void viewAllCustomers(){
+        System.out.println("Fetching all registered customers...");
+        List<String[]> allCustomers = customerDao.getAllCustomers();
 
-        int op = sc.nextInt();
-        System.out.println("1. View List of Registered Gyms");
-        System.out.println("2. View List of Pending Gyms");
-        System.out.println("3. View List of Registered Gym Owners");
-        System.out.println("4. View List of Pending Gym Owners");
-        System.out.println("5. View List of Registered Customers");
-        System.out.println("6. View List of Payment Transactions");
-        System.out.println("7. Delete User by id");
-        System.out.println("8. Delete Gym by id");
-        System.out.println("9. Exit");
+        System.out.println("Displaying all registered customers:");
+        for (String[] customer : allCustomers) {
+            System.out.println("------------------------------------");
+            System.out.println("User ID: " + customer[1]);
+            System.out.println("Full Name: " + customer[2]);
+            System.out.println("Email: " + customer[3]);
+            System.out.println("Phone number: " + customer[5]);
+            System.out.println("City: " + customer[6]);
+            System.out.println("Pincode: " + customer[7]);
+            System.out.println("------------------------------------");
+        }
+    }
 
-        while(op!=9){
-            System.out.println("1. View List of Registered Gyms");
-            System.out.println("2. View List of Pending Gyms");
-            System.out.println("3. View List of Registered Gym Owners");
-            System.out.println("4. View List of Pending Gym Owners");
-            System.out.println("5. View List of Registered Customers");
-            System.out.println("6. View List of Payment Transactions");
-            System.out.println("7. Delete User by id");
-            System.out.println("8. Delete Gym by id");
-            System.out.println("9. Exit");
-            op = sc.nextInt();
+    public void deleteUserById(int userId) {
+        adminDao.deleteUser(userId);
+        System.out.println("User with ID: " + userId + " deleted successfully.");
+    }
 
-            switch (op){
-                case 1: viewAllGyms();
+    public void deleteGymById(int gymId) {
+        adminDao.deleteGym(gymId);
+        System.out.println("Gym with ID: " + gymId + " deleted successfully.");
+    }
+
+    /**
+     * This method handles the entire admin menu flow with a while loop.
+     */
+    public static void displayAdminMenu() {
+        boolean exitAdminMenu = false;
+        AdminService adminService = new AdminService();
+        while (!exitAdminMenu) {
+            System.out.println("\n*** Welcome, Admin! ***");
+            System.out.println("1. View All Gyms");
+            System.out.println("2. View All Pending Gyms");
+            System.out.println("3. View All Gym Owners");
+            System.out.println("4. View All Pending Gym Owners");
+            System.out.println("5. View All Customers");
+            System.out.println("6. Approve Gym Owner");
+            System.out.println("7. Approve Gym Centre");
+            System.out.println("8. Delete User by id");
+            System.out.println("9. Delete Gym by id");
+            System.out.println("10. Exit");
+            System.out.print("Enter your choice: ");
+
+            int choice = in.nextInt();
+            in.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    adminService.viewAllGyms();
                     break;
                 case 2:
+                    adminService.viewPendingGyms();
                     break;
-                case 3: viewAllGymOwners();
+                case 3:
+                    adminService.viewAllGymOwners();
                     break;
                 case 4:
+                    adminService.viewPendingGymOwners();
                     break;
                 case 5:
+                    adminService.viewAllCustomers();
                     break;
                 case 6:
+                    System.out.print("Enter owner email to approve: ");
+                    String email = in.nextLine();
+                    adminService.approveGymOwnerRequest(email);
                     break;
                 case 7:
+                    System.out.print("Enter gym ID to approve: ");
+                    String gymId = in.nextLine();
+                    adminService.approveGymRequest(gymId);
                     break;
                 case 8:
+                    System.out.print("Enter user ID to delete: ");
+                    int userId = in.nextInt();
+                    in.nextLine(); // Consume newline
+                    adminService.deleteUserById(userId);
                     break;
-                case 9: break;
-                default: System.out.println("Invalid option");
+                case 9:
+                    System.out.print("Enter gym ID to delete: ");
+                    int gymIdToDelete = in.nextInt();
+                    in.nextLine(); // Consume newline
+                    adminService.deleteGymById(gymIdToDelete);
                     break;
+                case 10:
+                    exitAdminMenu = true;
+                    System.out.println("Exiting Admin menu.");
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
             }
-
         }
-
     }
 }

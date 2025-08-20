@@ -58,7 +58,7 @@ public class CustomerClient {
 
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
-        customerService.viewBookedSlots();
+//        customerService.viewBookedSlots();
     }
 
     private void viewCenters() {

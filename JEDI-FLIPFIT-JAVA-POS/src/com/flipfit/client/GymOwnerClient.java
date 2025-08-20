@@ -84,6 +84,6 @@ public class GymOwnerClient {
 
     private void editDetails() {
         System.out.println("Editing your personal details...");
-        gymOwnerService.editDetails();
+//        gymOwnerService.editDetails();
     }
 }
