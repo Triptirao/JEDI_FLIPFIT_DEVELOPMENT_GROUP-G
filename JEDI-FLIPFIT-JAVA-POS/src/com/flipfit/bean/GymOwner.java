@@ -5,8 +5,8 @@ public class GymOwner extends User {
     private String aadhaar;
     private String gst;
 
-    public GymOwner(String role, int userId, String fullName, String email, String password, long userPhone, String city, int pinCode, String pan, String aadhaar, String gst) {
-        super(role, userId, fullName, email, password, userPhone, city, pinCode);
+    public GymOwner(int id, String role, int userId, String fullName, String email, String password, long userPhone, String city, int pinCode, String pan, String aadhaar, String gst) {
+        super(id, role, userId, fullName, email, password, userPhone, city, pinCode);
         this.pan = pan;
         this.aadhaar = aadhaar;
         this.gst = gst;
