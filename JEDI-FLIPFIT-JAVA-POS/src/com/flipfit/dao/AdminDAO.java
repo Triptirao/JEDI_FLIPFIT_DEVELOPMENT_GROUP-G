@@ -60,11 +60,38 @@ public class AdminDAO {
     }
 
     public void approveGymOwnerRequest(String email) {
-        // This operation is now handled by approveGymRequest, as approval is tied to the gymCentre
-        // A direct 'approve' on the user isn't possible with the current schema.
-        // You might need to approve a user after they create their gym.
-        // For simplicity, this method is no longer directly functional without a corresponding change in application logic.
-        System.out.println("Approval is handled by approving a gym request. No user-level approval column exists.");
+        String sqlSelect = "SELECT gc.centreId FROM gymCentre gc INNER JOIN gymOwner go ON gc.ownerId = go.userId INNER JOIN user u ON go.userId = u.userId WHERE u.email = ?";
+        String sqlUpdate = "UPDATE gymCentre SET approved = true WHERE centreId = ?";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            int centreIdToApprove = -1;
+
+            try (PreparedStatement pstmtSelect = conn.prepareStatement(sqlSelect)) {
+                pstmtSelect.setString(1, email);
+                try (ResultSet rs = pstmtSelect.executeQuery()) {
+                    if (rs.next()) {
+                        centreIdToApprove = rs.getInt("centreId");
+                    }
+                }
+            }
+
+            if (centreIdToApprove != -1) {
+                try (PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdate)) {
+                    pstmtUpdate.setInt(1, centreIdToApprove);
+                    int rowsAffected = pstmtUpdate.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        System.out.println("Gym request for owner with email " + email + " approved successfully.");
+                    } else {
+                        System.out.println("No gym request found for owner with email " + email + ".");
+                    }
+                }
+            } else {
+                System.out.println("No pending gym request found for the provided owner email.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<String[]> getAllGyms() {
@@ -125,8 +152,6 @@ public class AdminDAO {
         return users;
     }
 
-    // In AdminDAO.java
-
     public List<String[]> getAllCustomers() {
         List<String[]> customers = new ArrayList<>();
         String sql = "SELECT u.userId, u.fullName, u.email, u.userPhone, u.city, u.pincode FROM user u INNER JOIN role r ON u.roleId = r.id WHERE r.role = 'customer'";
@@ -134,7 +159,7 @@ public class AdminDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                String[] user = new String[6]; // Change size to 6
+                String[] user = new String[6];
                 user[0] = String.valueOf(rs.getInt("userId"));
                 user[1] = rs.getString("fullName");
                 user[2] = rs.getString("email");
