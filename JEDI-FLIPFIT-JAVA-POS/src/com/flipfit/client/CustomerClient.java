@@ -125,22 +125,22 @@ public class CustomerClient {
                 case 1:
                     System.out.print("Enter new name: ");
                     newValue = in.nextLine();
-                    customerService.editCustomerDetails(loggedInCustomerId, 2, newValue);
+                    customerService.editCustomerDetails(loggedInCustomerId, 1, newValue);
                     break;
                 case 2:
                     System.out.print("Enter new email: ");
                     newValue = in.nextLine();
-                    customerService.editCustomerDetails(loggedInCustomerId, 3, newValue);
+                    customerService.editCustomerDetails(loggedInCustomerId, 2, newValue);
                     break;
                 case 3:
                     System.out.print("Enter new password: ");
                     newValue = in.nextLine();
-                    customerService.editCustomerDetails(loggedInCustomerId, 4, newValue);
+                    customerService.editCustomerDetails(loggedInCustomerId, 3, newValue);
                     break;
                 case 4:
                     System.out.print("Enter new phone number: ");
                     newValue = in.nextLine();
-                    customerService.editCustomerDetails(loggedInCustomerId, 5, newValue);
+                    customerService.editCustomerDetails(loggedInCustomerId, 4, newValue);
                     break;
                 case 5:
                     continueEditing = false;
