@@ -7,6 +7,7 @@ import com.flipfit.dao.UserDAO;
 import com.flipfit.dao.GymCentreDAO;
 
 import java.util.Scanner;
+import java.util.Optional;
 
 public class GymOwnerClient {
 
@@ -79,21 +80,24 @@ public class GymOwnerClient {
     }
 
     private void addCentre() {
-        System.out.println("--- Add a New Gym Centre ---");
-        System.out.print("Enter gym ID: ");
-        String gymId = in.nextLine();
-        System.out.print("Enter gym name: ");
-        String name = in.nextLine();
-        System.out.print("Enter gym capacity: ");
-        String capacity = in.nextLine();
-        System.out.print("Enter gym city: ");
-        String city = in.nextLine();
-        System.out.print("Enter gym state: ");
-        String state = in.nextLine();
-
-        String[] newGymData = new String[]{gymId, loggedInOwnerId, name, capacity, "false", city, state};
-        gymOwnerService.addCentre(newGymData);
-        System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
+        Optional<String[]> ownerData = userDao.getUserById(loggedInOwnerId);
+        if (ownerData.isPresent() && ownerData.get().length > 11 && ownerData.get()[11].equals("true")) {
+            System.out.print("Enter gym ID: ");
+            String gymId = in.nextLine();
+            System.out.print("Enter gym name: ");
+            String name = in.nextLine();
+            System.out.print("Enter gym capacity: ");
+            String capacity = in.nextLine();
+            System.out.print("Enter gym city: ");
+            String city = in.nextLine();
+            System.out.print("Enter gym state: ");
+            String state = in.nextLine();
+            String[] newGymData = new String[]{gymId, loggedInOwnerId, name, capacity, "false", city, state};
+            gymOwnerService.addCentre(newGymData);
+            System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
+        } else {
+            System.out.println("You are not yet approved to add a gym centre. Please wait for an admin to approve your account.");
+        }
     }
 
     private void viewGymDetails() {

@@ -1,5 +1,7 @@
 package com.flipfit.dao;
 
+import com.sun.tools.jconsole.JConsoleContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +27,7 @@ public class AdminDAO {
 
     public List<String[]> getPendingGymOwnerRequests() {
         return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("OWNER") && user[4].equals("false")) // Assuming Approved field is at index 8 for GymOwner in UserDAO
+                .filter(user -> user[0].equals("OWNER") && user[11].equals("false")) // Assuming Approved field is at index 8 for GymOwner in UserDAO
                 .collect(Collectors.toList());
     }
 
@@ -33,7 +35,7 @@ public class AdminDAO {
         userDao.getAllUsers().stream()
                 .filter(user -> user[3].equals(email))
                 .findFirst()
-                .ifPresent(user -> user[8] = "true"); // Assuming Approved field is at index 8
+                .ifPresent(user -> user[11] = "true"); // Assuming Approved field is at index 8
     }
 
     public List<String[]> getAllGyms() {
