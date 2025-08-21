@@ -41,7 +41,7 @@ public class ApplicationClient {
         this.customerDao = customerDao;
 
         this.authenticationService = new AuthenticationService(this.userDao);
-        this.adminService = new AdminService(this.adminDao, this.customerDao, this.userDao,this.gymOwnerDao);
+        this.adminService = new AdminService(this.adminDao, this.customerDao, this.userDao, this.gymOwnerDao);
         this.gymOwnerService = new GymOwnerService(this.gymOwnerDao, this.userDao, this.customerDao);
         this.customerService = new CustomerService(this.customerDao, this.userDao, this.gymOwnerDao);
     }
@@ -62,7 +62,8 @@ public class ApplicationClient {
             String role = userData[0];
 
             if (role.equalsIgnoreCase("CUSTOMER")) {
-                CustomerClient customerClient = new CustomerClient(customerDao, userDao, userData[1]);
+                // Corrected call: passing all 4 arguments
+                CustomerClient customerClient = new CustomerClient(customerDao, userDao, gymOwnerDao, userData[1]);
                 customerClient.customerPage();
             } else if (role.equalsIgnoreCase("OWNER")) {
                 GymOwnerClient gymOwnerClient = new GymOwnerClient(gymOwnerDao, userDao, customerDao, userData[1]);
@@ -113,7 +114,7 @@ public class ApplicationClient {
         String gst = scanner.nextLine();
 
         System.out.println("Registration received for Owner: " + name);
-        authenticationService.registerGymOwner(name, email, password, phone, aadhaar, pan,gst);
+        authenticationService.registerGymOwner(name, email, password, phone, aadhaar, pan, gst);
         System.out.println("Registration Successful (Pending Approval)");
     }
 

@@ -2,8 +2,11 @@ package com.flipfit.client;
 
 import com.flipfit.bean.Booking;
 import com.flipfit.business.CustomerService;
-import com.flipfit.dao.*;
+import com.flipfit.dao.CustomerDAO;
+import com.flipfit.dao.GymOwnerDAO;
+import com.flipfit.dao.UserDAO;
 
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -12,10 +15,10 @@ public class CustomerClient {
     private GymOwnerDAO gymOwnerDao;
     private CustomerService customerService;
     private Scanner in;
-    private String loggedInCustomerId; // To track the logged-in user
+    private String loggedInCustomerId;
 
-    // The constructor now receives DAOs as dependencies
-    public CustomerClient(CustomerDAO customerDAO, UserDAO userDao, String loggedInCustomerId) {
+    public CustomerClient(CustomerDAO customerDAO, UserDAO userDao, GymOwnerDAO gymOwnerDao, String loggedInCustomerId) {
+        this.gymOwnerDao = gymOwnerDao;
         this.customerService = new CustomerService(customerDAO, userDao, this.gymOwnerDao);
         this.in = new Scanner(System.in);
         this.loggedInCustomerId = loggedInCustomerId;
@@ -35,13 +38,13 @@ public class CustomerClient {
             System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
 
-            int choice;
+            int choice = -1;
             try {
                 choice = in.nextInt();
                 in.nextLine(); // Consume newline
-            } catch (Exception e) {
+            } catch (InputMismatchException e) {
                 System.out.println("Invalid input. Please enter a number.");
-                in.next();
+                in.next(); // Clear the invalid input
                 continue;
             }
 
@@ -61,48 +64,44 @@ public class CustomerClient {
                 case 5:
                     bookaSlot();
                     break;
-                    case 6:
-                        System.out.println("Exiting Customer Menu...");
-                        exitCustomerMenu = true;
-                        break;
+                case 6:
+                    System.out.println("Exiting Customer Menu...");
+                    exitCustomerMenu = true;
+                    break;
                 default:
                     System.out.println("Invalid number. Please try again.");
             }
         }
     }
+
     private void bookaSlot() {
-        CustomerDAO customerDao = new CustomerDAO();
-        UserDAO userDao = new UserDAO();
-        GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
-
-        CustomerService customerService = new CustomerService(customerDao, userDao, gymOwnerDao);
-
-        Scanner scanner = new Scanner(System.in);
-
         System.out.println("--- Book a Slot ---");
-        System.out.print("Enter Booking ID: ");
-        int bookingId = scanner.nextInt();
+        try {
+            System.out.print("Enter Booking ID: ");
+            int bookingId = in.nextInt();
 
-        System.out.print("Enter Customer ID: ");
-        int customerId = scanner.nextInt();
+            // The customer ID is already known from the login session.
+            int customerId = Integer.parseInt(loggedInCustomerId);
 
-        System.out.print("Enter Gym ID: ");
-        int gymId = scanner.nextInt();
+            System.out.print("Enter Gym ID: ");
+            int gymId = in.nextInt();
 
-        System.out.print("Enter Slot ID: ");
-        int slotId = scanner.nextInt();
+            System.out.print("Enter Slot ID: ");
+            int slotId = in.nextInt();
+            in.nextLine(); // Consume newline
 
-        customerService.bookSlot(bookingId, customerId, gymId, slotId);
+            customerService.bookSlot(bookingId, customerId, gymId, slotId);
+        } catch (InputMismatchException e) {
+            System.err.println("Invalid input. Please enter a valid number for all IDs.");
+            in.nextLine(); // Clear the rest of the line
+        }
     }
+
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
-
-        // Assuming `loggedInCustomerId` is a String and `customerService` is a valid instance.
-        // The `viewBookedSlots` method on customerService should return List<Booking>
-        // to be consistent with this code block.
         List<Booking> bookings = customerService.viewBookedSlots(loggedInCustomerId);
 
-        if (bookings.isEmpty()) {
+        if (bookings == null || bookings.isEmpty()) {
             System.out.println("No booked slots found.");
         } else {
             System.out.println("Booking Details:");
@@ -116,7 +115,7 @@ public class CustomerClient {
 
     private void viewCenters() {
         List<String[]> centers = customerService.viewCenters();
-        if (centers.isEmpty()) {
+        if (centers == null || centers.isEmpty()) {
             System.out.println("No gym centers found.");
         } else {
             System.out.println("Gym Centers:");
@@ -129,8 +128,16 @@ public class CustomerClient {
     private void makePayments() {
         System.out.println("Initiating payment process...");
         System.out.print("Enter payment type (1 for Credit Card, 2 for Debit Card, etc.): ");
-        int paymentType = in.nextInt();
-        in.nextLine(); // Consume newline
+        int paymentType;
+        try {
+            paymentType = in.nextInt();
+            in.nextLine(); // Consume newline
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input. Please enter a valid number.");
+            in.next();
+            return;
+        }
+
         System.out.print("Enter account number: ");
         String paymentInfo = in.nextLine();
 
@@ -147,8 +154,16 @@ public class CustomerClient {
             System.out.println("4. Change Phone Number");
             System.out.println("5. Back to main menu");
             System.out.print("Enter your choice: ");
-            int editChoice = in.nextInt();
-            in.nextLine(); // Consume newline
+
+            int editChoice = -1;
+            try {
+                editChoice = in.nextInt();
+                in.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                in.next();
+                continue;
+            }
 
             String newValue;
             switch (editChoice) {
