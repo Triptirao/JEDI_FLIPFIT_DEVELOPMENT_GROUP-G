@@ -36,4 +36,10 @@ public class GymCentreDAO {
     public void deleteGym(String gymId) {
         gymCentres.removeIf(gym -> gym[0].equals(gymId));
     }
+
+    public List<String[]> getApprovedGyms() {
+        return gymCentres.stream()
+                .filter(gym -> gym[4].equals("true"))
+                .collect(Collectors.toList());
+    }
 }

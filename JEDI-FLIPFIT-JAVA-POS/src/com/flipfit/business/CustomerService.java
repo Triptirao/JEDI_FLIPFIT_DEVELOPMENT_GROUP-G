@@ -29,7 +29,7 @@ public class CustomerService {
 
     public List<String[]> viewCenters() {
         System.out.println("Fetching all available gym centers...");
-        return gymCentreDao.getAllGyms();
+        return gymCentreDao.getApprovedGyms();
     }
 
     public void makePayments(int paymentType, String paymentInfo) {
