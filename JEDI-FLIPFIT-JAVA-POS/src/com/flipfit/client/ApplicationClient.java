@@ -6,7 +6,6 @@ import com.flipfit.business.CustomerService;
 import com.flipfit.business.GymOwnerService;
 import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
-import com.flipfit.dao.GymCentreDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
 
@@ -26,7 +25,6 @@ public class ApplicationClient {
     private final AdminDAO adminDao;
     private final GymOwnerDAO gymOwnerDao;
     private final CustomerDAO customerDao;
-    private final GymCentreDAO gymCentreDao;
 
     // Regex for email validation
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -36,17 +34,16 @@ public class ApplicationClient {
     private static final String PHONE_REGEX = "^[0-9]{10}$";
     private static final Pattern PHONE_PATTERN = Pattern.compile(PHONE_REGEX);
 
-    public ApplicationClient(UserDAO userDao, AdminDAO adminDao, GymOwnerDAO gymOwnerDao, CustomerDAO customerDao, GymCentreDAO gymCentreDao) {
+    public ApplicationClient(UserDAO userDao, AdminDAO adminDao, GymOwnerDAO gymOwnerDao, CustomerDAO customerDao) {
         this.userDao = userDao;
         this.adminDao = adminDao;
         this.gymOwnerDao = gymOwnerDao;
         this.customerDao = customerDao;
-        this.gymCentreDao = gymCentreDao;
 
         this.authenticationService = new AuthenticationService(this.userDao);
-        this.adminService = new AdminService(this.adminDao, this.customerDao, this.userDao,this.gymOwnerDao, this.gymCentreDao);
-        this.gymOwnerService = new GymOwnerService(this.gymOwnerDao, this.userDao, this.customerDao,this.gymCentreDao);
-        this.customerService = new CustomerService(this.customerDao, this.userDao, this.gymOwnerDao,this.gymCentreDao);
+        this.adminService = new AdminService(this.adminDao, this.customerDao, this.userDao,this.gymOwnerDao);
+        this.gymOwnerService = new GymOwnerService(this.gymOwnerDao, this.userDao, this.customerDao);
+        this.customerService = new CustomerService(this.customerDao, this.userDao, this.gymOwnerDao);
     }
 
     public void login() {
@@ -65,13 +62,13 @@ public class ApplicationClient {
             String role = userData[0];
 
             if (role.equalsIgnoreCase("CUSTOMER")) {
-                CustomerClient customerClient = new CustomerClient(customerDao, userDao, userData[1],gymCentreDao);
+                CustomerClient customerClient = new CustomerClient(customerDao, userDao, userData[1]);
                 customerClient.customerPage();
             } else if (role.equalsIgnoreCase("OWNER")) {
-                GymOwnerClient gymOwnerClient = new GymOwnerClient(gymOwnerDao, userDao, customerDao, userData[1],gymCentreDao);
+                GymOwnerClient gymOwnerClient = new GymOwnerClient(gymOwnerDao, userDao, customerDao, userData[1]);
                 gymOwnerClient.gymOwnerPage();
             } else if (role.equalsIgnoreCase("ADMIN")) {
-                AdminClient adminClient = new AdminClient(adminDao, customerDao, userDao, gymOwnerDao,gymCentreDao);
+                AdminClient adminClient = new AdminClient(adminDao, customerDao, userDao, gymOwnerDao);
                 adminClient.adminPage();
             } else {
                 System.out.println("Invalid Role for user.");

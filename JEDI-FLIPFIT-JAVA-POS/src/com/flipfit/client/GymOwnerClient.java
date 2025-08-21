@@ -4,7 +4,6 @@ import com.flipfit.business.GymOwnerService;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
 
 import java.util.Scanner;
 import java.util.Optional;
@@ -17,16 +16,14 @@ public class GymOwnerClient {
     private final CustomerDAO customerDao;
     private final GymOwnerDAO gymOwnerDao;
     private final String loggedInOwnerId;
-    private final GymCentreDAO gymCentreDao;
 
     // The constructor should receive the DAOs and the logged-in user ID
-    public GymOwnerClient(GymOwnerDAO gymOwnerDAO, UserDAO userDao, CustomerDAO customerDao, String loggedInOwnerId, GymCentreDAO gymCentreDao) {
+    public GymOwnerClient(GymOwnerDAO gymOwnerDAO, UserDAO userDao, CustomerDAO customerDao, String loggedInOwnerId) {
         this.gymOwnerDao = gymOwnerDAO;
         this.userDao = userDao;
         this.customerDao = customerDao;
         this.loggedInOwnerId = loggedInOwnerId;
-        this.gymCentreDao = gymCentreDao;
-        this.gymOwnerService = new GymOwnerService(gymOwnerDAO, userDao, customerDao,gymCentreDao);
+        this.gymOwnerService = new GymOwnerService(gymOwnerDAO, userDao, customerDao);
         this.in = new Scanner(System.in);
     }
 

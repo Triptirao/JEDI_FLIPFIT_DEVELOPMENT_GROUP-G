@@ -4,7 +4,6 @@ import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
 
 
 import java.util.List;
@@ -17,19 +16,17 @@ public class AdminService {
     private CustomerDAO customerDao;
     private UserDAO userDao;
     private GymOwnerDAO gymOwnerDao;
-    private GymCentreDAO gymCentreDao;
 
     public AdminService() {
         this.adminDao = new AdminDAO();
         this.customerDao = new CustomerDAO();
     }
 
-    public AdminService(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao, GymCentreDAO gymCentreDao) {
+    public AdminService(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao) {
         this.adminDao = adminDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
         this.gymOwnerDao = gymOwnerDao;
-        this.gymCentreDao = gymCentreDao;
     }
 
     /**

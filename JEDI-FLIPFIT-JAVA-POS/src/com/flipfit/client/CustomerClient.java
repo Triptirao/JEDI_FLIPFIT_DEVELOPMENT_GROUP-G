@@ -13,14 +13,12 @@ public class CustomerClient {
     private CustomerService customerService;
     private Scanner in;
     private String loggedInCustomerId; // To track the logged-in user
-    private GymCentreDAO gymCentreDao;
 
     // The constructor now receives DAOs as dependencies
-    public CustomerClient(CustomerDAO customerDAO, UserDAO userDao, String loggedInCustomerId, GymCentreDAO gymCentreDao) {
-        this.customerService = new CustomerService(customerDAO, userDao, this.gymOwnerDao, gymCentreDao);
+    public CustomerClient(CustomerDAO customerDAO, UserDAO userDao, String loggedInCustomerId) {
+        this.customerService = new CustomerService(customerDAO, userDao, this.gymOwnerDao);
         this.in = new Scanner(System.in);
         this.loggedInCustomerId = loggedInCustomerId;
-        this.gymCentreDao = gymCentreDao;
     }
 
     public void customerPage() {
@@ -76,9 +74,8 @@ public class CustomerClient {
         CustomerDAO customerDao = new CustomerDAO();
         UserDAO userDao = new UserDAO();
         GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
-        GymCentreDAO gymCentreDao = new GymCentreDAO();
 
-        CustomerService customerService = new CustomerService(customerDao, userDao, gymOwnerDao, gymCentreDao);
+        CustomerService customerService = new CustomerService(customerDao, userDao, gymOwnerDao);
 
         Scanner scanner = new Scanner(System.in);
 

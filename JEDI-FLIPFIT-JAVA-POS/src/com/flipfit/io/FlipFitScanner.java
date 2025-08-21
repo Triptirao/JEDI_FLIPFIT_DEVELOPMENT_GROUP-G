@@ -5,7 +5,6 @@ import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -17,10 +16,9 @@ public class FlipFitScanner {
         AdminDAO adminDao = new AdminDAO();
         GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
         CustomerDAO customerDao = new CustomerDAO();
-        GymCentreDAO gymCentreDao = new GymCentreDAO();
 
         // Pass the DAOs to the ApplicationClient's constructor
-        ApplicationClient applicationClient = new ApplicationClient(userDao, adminDao, gymOwnerDao, customerDao,gymCentreDao);
+        ApplicationClient applicationClient = new ApplicationClient(userDao, adminDao, gymOwnerDao, customerDao);
 
         final Scanner in = new Scanner(System.in);
         System.out.println("Welcome to flip fit application\n");

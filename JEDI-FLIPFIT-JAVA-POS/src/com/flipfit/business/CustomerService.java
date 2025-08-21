@@ -13,13 +13,12 @@ public class CustomerService {
     private GymOwnerDAO gymOwnerDao;
     private UserDAO userDao;
     private CustomerService customerService;
-    private GymCentreDAO gymCentreDao;
+    private GymOwnerDAO gymOwnerDAO;
 
-    public CustomerService(CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao, GymCentreDAO gymCentreDao) {
+    public CustomerService(CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao) {
         this.customerDao = customerDao;
         this.userDao = userDao;
         this.gymOwnerDao = gymOwnerDao;
-        this.gymCentreDao = gymCentreDao;
     }
 
     public List<Booking> viewBookedSlots(String customerId) {
@@ -37,7 +36,7 @@ public class CustomerService {
 
     public List<String[]> viewCenters() {
         System.out.println("Fetching all available gym centers...");
-        return gymCentreDao.getApprovedGyms();
+        return gymOwnerDAO.getApprovedGyms();
     }
     public void bookSlot(int bookingId, int customerId, int slotId, int centreId) {
         System.out.println("Booking your slot...");

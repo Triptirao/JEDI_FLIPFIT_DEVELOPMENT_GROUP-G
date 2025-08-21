@@ -3,7 +3,6 @@ package com.flipfit.business;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
 
 import java.util.List;
 import java.util.Scanner;
@@ -14,13 +13,11 @@ public class GymOwnerService {
     private GymOwnerDAO gymOwnerDao;
     private CustomerDAO customerDao;
     private UserDAO userDao;
-    private GymCentreDAO gymCentreDao;
 
-    public GymOwnerService(GymOwnerDAO gymOwnerDao, UserDAO userDao, CustomerDAO customerDao, GymCentreDAO gymCentreDao) {
+    public GymOwnerService(GymOwnerDAO gymOwnerDao, UserDAO userDao, CustomerDAO customerDao) {
         this.gymOwnerDao = gymOwnerDao;
         this.userDao = userDao;
         this.customerDao = customerDao;
-        this.gymCentreDao = gymCentreDao;
     }
     public void addCentre(String[] gymData) {
         gymOwnerDao.addGym(gymData);

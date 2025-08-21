@@ -9,22 +9,28 @@ public class GymOwnerDAO {
 
     // This DAO now relies on other DAOs for core data.
     private UserDAO userDao = new UserDAO();
-    private GymCentreDAO gymCentreDao = new GymCentreDAO();
 
-    // We will still keep a small list of gym owners for methods specific to this DAO
+    // Data for Gym Owners
     private static List<String[]> gymOwners = new ArrayList<>();
+    // Data for Gym Centres
+    private static List<String[]> gymCentres = new ArrayList<>();
 
     static {
         // Hardcoded data for Gym Owners: {Role, ID, Name, Email, Password, Phone, City, Pincode, PAN, Aadhaar, GST, Approved}
         gymOwners.add(new String[]{"OWNER", "1", "Ravi Sharma", "ravi.sharma@example.com", "secure123", "9876543210", "Bengaluru", "560001", "ABCDE1234F", "123456789012", "29ABCDE1234F1Z5", "true"});
+
+        // Hardcoded data for Gym Centres: {ID, OwnerID, Name, Slots, Capacity, Approved, City, State}
+        gymCentres.add(new String[]{"1", "101", "Fitness Hub", "slot1,slot2,slot3", "50", "false", "Bengaluru", "Karnataka"});
+        gymCentres.add(new String[]{"2", "102", "Zenith Fitness", "slot1,slot2,slot3", "75", "true", "Bengaluru", "Karnataka"});
+        gymCentres.add(new String[]{"3", "103", "Flex Gym", "slot1,slot2", "45", "false", "Mumbai", "Maharashtra"});
     }
 
     public void addGym(String[] gym) {
-        gymCentreDao.getAllGyms().add(gym);
+        gymCentres.add(gym);
     }
 
     public List<String[]> getGymsByOwnerId(String ownerId) {
-        return gymCentreDao.getAllGyms().stream()
+        return gymCentres.stream()
                 .filter(gym -> gym[1].equals(ownerId))
                 .collect(Collectors.toList());
     }
@@ -40,8 +46,31 @@ public class GymOwnerDAO {
         return new ArrayList<>();
     }
 
-    public List<String[]> getAllGyms() {
-        return gymCentreDao.getAllGyms();
+    public static List<String[]> getAllGyms() {
+        return gymCentres;
+    }
+
+    public List<String[]> getPendingGymRequests() {
+        return gymCentres.stream()
+                .filter(gym -> gym[5].equals("false"))
+                .collect(Collectors.toList());
+    }
+
+    public void approveGymRequest(String gymId) {
+        gymCentres.stream()
+                .filter(gym -> gym[0].equals(gymId))
+                .findFirst()
+                .ifPresent(gym -> gym[5] = "true");
+    }
+
+    public void deleteGym(String gymId) {
+        gymCentres.removeIf(gym -> gym[0].equals(gymId));
+    }
+
+    public List<String[]> getApprovedGyms() {
+        return gymCentres.stream()
+                .filter(gym -> gym[5].equals("true"))
+                .collect(Collectors.toList());
     }
 
     /**

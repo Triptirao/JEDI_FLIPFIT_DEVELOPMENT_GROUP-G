@@ -10,19 +10,19 @@ public class AdminDAO {
 
     // Injecting the new DAOs
     private UserDAO userDao;
-    private GymCentreDAO gymCentreDao;
+    private GymOwnerDAO gymOwnerDAO;
 
     public AdminDAO() {
         this.userDao = new UserDAO();
-        this.gymCentreDao = new GymCentreDAO();
+        this.gymOwnerDAO = new GymOwnerDAO();
     }
 
     public List<String[]> getPendingGymRequests() {
-        return gymCentreDao.getPendingGymRequests();
+        return gymOwnerDAO.getPendingGymRequests();
     }
 
     public void approveGymRequest(String gymId) {
-        gymCentreDao.approveGymRequest(gymId);
+        gymOwnerDAO.approveGymRequest(gymId);
     }
 
     public List<String[]> getPendingGymOwnerRequests() {
@@ -39,7 +39,7 @@ public class AdminDAO {
     }
 
     public List<String[]> getAllGyms() {
-        return gymCentreDao.getAllGyms();
+        return GymOwnerDAO.getAllGyms();
     }
 
     // Corrected method to get all gym owners by filtering the users
@@ -64,6 +64,6 @@ public class AdminDAO {
     }
 
     public void deleteGym(String gymId) {
-        gymCentreDao.deleteGym(gymId);
+        gymOwnerDAO.deleteGym(gymId);
     }
 }

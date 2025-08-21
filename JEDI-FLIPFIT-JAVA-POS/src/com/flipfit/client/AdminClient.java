@@ -5,7 +5,6 @@ import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
 
 import java.util.Scanner;
 
@@ -14,8 +13,8 @@ public class AdminClient {
     private final AdminService adminService;
     private final Scanner in;
 
-    public AdminClient(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao,GymCentreDAO gymCentreDao) {
-        this.adminService = new AdminService(adminDao, customerDao, userDao, gymOwnerDao,gymCentreDao);
+    public AdminClient(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao) {
+        this.adminService = new AdminService(adminDao, customerDao, userDao, gymOwnerDao);
         this.in = new Scanner(System.in);
     }
 
