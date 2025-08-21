@@ -1,6 +1,3 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-
-# Ignore a specific file
-../JEDI-FLIPFIT-JAVA-POS/src/com/flipfit/utils/DBConnection.java
