@@ -2,16 +2,24 @@ package com.flipfit.business;
 
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
+import com.flipfit.dao.UserDAO;
+import com.flipfit.dao.GymCentreDAO;
+
 import java.util.List;
 
 public class CustomerService {
 
     private CustomerDAO customerDao;
     private GymOwnerDAO gymOwnerDao;
+    private UserDAO userDao;
+    private CustomerService customerService;
+    private GymCentreDAO gymCentreDao;
 
-    public CustomerService() {
-        this.customerDao = new CustomerDAO();
-        this.gymOwnerDao = new GymOwnerDAO();
+    public CustomerService(CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao, GymCentreDAO gymCentreDao) {
+        this.customerDao = customerDao;
+        this.userDao = userDao;
+        this.gymOwnerDao = gymOwnerDao;
+        this.gymCentreDao = gymCentreDao;
     }
 
     public List<String[]> viewBookedSlots(String customerId) {
@@ -21,16 +29,15 @@ public class CustomerService {
 
     public List<String[]> viewCenters() {
         System.out.println("Fetching all available gym centers...");
-        return gymOwnerDao.getGymsByOwnerId(null); // Returning all gyms for simplicity
+        return gymCentreDao.getAllGyms();
     }
 
     public void makePayments(int paymentType, String paymentInfo) {
-        // Business logic for processing a payment.
         System.out.println("Processing payment of type: " + paymentType + " with info: " + paymentInfo);
     }
 
-    public void editDetails() {
-        // Business logic to update the customer's profile details.
-        System.out.println("Allowing customer to edit their details...");
+    public void editCustomerDetails(String customerId, int choice, String newValue) {
+        userDao.updateUserDetails(customerId, choice, newValue);
+        System.out.println("Customer details updated successfully.");
     }
 }

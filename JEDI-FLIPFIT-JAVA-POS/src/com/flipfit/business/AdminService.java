@@ -2,6 +2,11 @@ package com.flipfit.business;
 
 import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
+import com.flipfit.dao.GymOwnerDAO;
+import com.flipfit.dao.UserDAO;
+import com.flipfit.dao.GymCentreDAO;
+
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -10,10 +15,21 @@ public class AdminService {
     private static final Scanner in = new Scanner(System.in);
     private AdminDAO adminDao;
     private CustomerDAO customerDao;
+    private UserDAO userDao;
+    private GymOwnerDAO gymOwnerDao;
+    private GymCentreDAO gymCentreDao;
 
     public AdminService() {
         this.adminDao = new AdminDAO();
         this.customerDao = new CustomerDAO();
+    }
+
+    public AdminService(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao, GymCentreDAO gymCentreDao) {
+        this.adminDao = adminDao;
+        this.customerDao = customerDao;
+        this.userDao = userDao;
+        this.gymOwnerDao = gymOwnerDao;
+        this.gymCentreDao = gymCentreDao;
     }
 
     /**
@@ -78,12 +94,9 @@ public class AdminService {
             System.out.println("Centre ID: " + gym[0]);
             System.out.println("Owner ID: " + gym[1]);
             System.out.println("Name: " + gym[2]);
-            System.out.println("Capacity: " + gym[4]);
-            System.out.println("City: " + gym[6]);
-            System.out.println("State: " + gym[7]);
-            System.out.println("Pincode: " + gym[8]);
-            System.out.println("Slots: " + gym[3]);
-            System.out.println("Facilities: " + gym[9]);
+            System.out.println("Capacity: " + gym[3]);
+            System.out.println("City: " + gym[5]);
+            System.out.println("State: " + gym[6]);
             System.out.println("------------------------------------");
         }
     }
@@ -110,7 +123,7 @@ public class AdminService {
 
     public void viewAllCustomers(){
         System.out.println("Fetching all registered customers...");
-        List<String[]> allCustomers = customerDao.getAllCustomers();
+        List<String[]> allCustomers = adminDao.getAllCustomers();
 
         System.out.println("Displaying all registered customers:");
         for (String[] customer : allCustomers) {
@@ -126,12 +139,12 @@ public class AdminService {
     }
 
     public void deleteUserById(int userId) {
-        adminDao.deleteUser(userId);
+        adminDao.deleteUser(String.valueOf(userId));
         System.out.println("User with ID: " + userId + " deleted successfully.");
     }
 
     public void deleteGymById(int gymId) {
-        adminDao.deleteGym(gymId);
+        adminDao.deleteGym(String.valueOf(gymId));
         System.out.println("Gym with ID: " + gymId + " deleted successfully.");
     }
 

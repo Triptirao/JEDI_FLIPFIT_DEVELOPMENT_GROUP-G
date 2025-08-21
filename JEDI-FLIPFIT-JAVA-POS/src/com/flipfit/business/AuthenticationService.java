@@ -1,46 +1,42 @@
 package com.flipfit.business;
 
-import com.flipfit.bean.User;
-import com.flipfit.bean.Customer;
-import com.flipfit.bean.GymOwner;
+import com.flipfit.dao.UserDAO;
 
 public class AuthenticationService {
 
-//    public User loginUser(String email, String password) {
-//        // Hardcoded check for admin credentials
-//        if ("admin@flipfit.com".equals(email) && "admin123".equals(password)) {
-//            System.out.println("Admin login successful!");
-//            User adminUser = new User();
-//            adminUser.setEmail("admin@flipfit.com");
-//            adminUser.setPassword("admin123");
-//            adminUser.setName("Admin");
-//            return adminUser;
-//        }
-//
-//        // Placeholder for user login logic.
-//        // In a real application, you would check a database here.
-//        System.out.println("Attempting to log in user with email: " + email);
-//        if (email.equals("admin@example.com") && password.equals("pass")) {
-//            User user = new User();
-//            user.setEmail("admin@example.com");
-//            user.setPassword("pass");
-//            user.setName("Example Admin");
-//            return user;
-//        }
-//        return null;
-//    }
+    private UserDAO userDao;
 
-    public void registerCustomer(String name, String email, String password, String phone) {
-        // Placeholder for customer registration logic
-        System.out.println("Registering new customer: " + name);
-        // Save the new Customer object to a database or data store
-        // Customer newCustomer = new Customer(email, password, name, phone);
+    public AuthenticationService() {
+        this.userDao = this.userDao;
     }
 
-    public void registerGymOwner(String name, String email, String password, String phone, String aadhar, String pan, String gstNumber) {
-        // Placeholder for gym owner registration logic
-        System.out.println("Registering new gym owner: " + name);
-        // Save the new GymOwner object to a database or data store
-        // GymOwner newGymOwner = new GymOwner(email, password, name, aadhar, gstNumber);
+    public AuthenticationService(UserDAO userDao) {
+        this.userDao = userDao;
+    }
+
+    public String[] login(String email, String password) {
+        // Authenticate user by checking against all users in the DAO
+        for (String[] user : userDao.getAllUsers()) {
+            if (user[3].equals(email) && user[4].equals(password)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public void registerCustomer(String name, String email, String password, String phone) {
+        // Here you would generate a unique ID for the new customer
+        String newId = String.valueOf(userDao.getAllUsers().size() + 1);
+        String[] newCustomer = {"CUSTOMER", newId, name, email, password, phone, "N/A", "N/A"};
+        userDao.getAllUsers().add(newCustomer);
+        System.out.println("Customer registration received for " + name);
+    }
+
+    public void registerGymOwner(String name, String email, String password, String phone, String aadhaar, String pan, String gst) {
+        // Here you would generate a unique ID for the new gym owner
+        String newId = String.valueOf(userDao.getAllUsers().size() + 1);
+        String[] newOwner = {"OWNER", newId, name, email, password, phone, "N/A", "N/A", pan, aadhaar, gst, "false"};
+        userDao.getAllUsers().add(newOwner);
+        System.out.println("Gym owner registration received for " + name);
     }
 }

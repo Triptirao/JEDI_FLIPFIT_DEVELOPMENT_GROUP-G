@@ -1,11 +1,27 @@
 package com.flipfit.io;
-import com.flipfit.client.ApplicationClient;
 
+import com.flipfit.client.ApplicationClient;
+import com.flipfit.dao.AdminDAO;
+import com.flipfit.dao.CustomerDAO;
+import com.flipfit.dao.GymOwnerDAO;
+import com.flipfit.dao.UserDAO;
+import com.flipfit.dao.GymCentreDAO;
+
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class FlipFitScanner {
     public static void main(String args[]) {
-        ApplicationClient applicationClient = new ApplicationClient();
+        // Instantiate the DAOs first
+        UserDAO userDao = new UserDAO();
+        AdminDAO adminDao = new AdminDAO();
+        GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
+        CustomerDAO customerDao = new CustomerDAO();
+        GymCentreDAO gymCentreDao = new GymCentreDAO();
+
+        // Pass the DAOs to the ApplicationClient's constructor
+        ApplicationClient applicationClient = new ApplicationClient(userDao, adminDao, gymOwnerDao, customerDao,gymCentreDao);
+
         final Scanner in = new Scanner(System.in);
         System.out.println("Welcome to flip fit application\n");
 
@@ -15,7 +31,16 @@ public class FlipFitScanner {
             System.out.println("2. Register as Customer");
             System.out.println("3. Register as Owner");
             System.out.println("4. Exit");
-            int op = in.nextInt();
+            int op = 0;
+            try {
+                op = in.nextInt();
+                in.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                in.next();
+                continue;
+            }
+
             switch(op){
                 case 1: applicationClient.login();
                     break;
@@ -30,5 +55,4 @@ public class FlipFitScanner {
             }
         }
     }
-
 }

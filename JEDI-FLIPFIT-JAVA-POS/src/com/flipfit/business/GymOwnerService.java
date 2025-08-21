@@ -1,6 +1,9 @@
 package com.flipfit.business;
 
+import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
+import com.flipfit.dao.UserDAO;
+import com.flipfit.dao.GymCentreDAO;
 
 import java.util.List;
 import java.util.Scanner;
@@ -9,19 +12,24 @@ public class GymOwnerService {
 
     private static final Scanner in = new Scanner(System.in);
     private GymOwnerDAO gymOwnerDao;
+    private CustomerDAO customerDao;
+    private UserDAO userDao;
+    private GymCentreDAO gymCentreDao;
 
-    public GymOwnerService() {
-        this.gymOwnerDao = new GymOwnerDAO();
+    public GymOwnerService(GymOwnerDAO gymOwnerDao, UserDAO userDao, CustomerDAO customerDao, GymCentreDAO gymCentreDao) {
+        this.gymOwnerDao = gymOwnerDao;
+        this.userDao = userDao;
+        this.customerDao = customerDao;
+        this.gymCentreDao = gymCentreDao;
     }
-
     public void addCentre(String[] gymData) {
         gymOwnerDao.addGym(gymData);
         System.out.println("Adding new gym centre: " + gymData[2]);
     }
 
-    public void viewGymDetails() {
+    public void viewGymDetails(String ownerId) {
         System.out.println("Fetching details for all your gym centres...");
-        List<String[]> gyms = gymOwnerDao.getGymsByOwnerId("owner123");
+        List<String[]> gyms = gymOwnerDao.getGymsByOwnerId(ownerId);
 
         System.out.println("------------------------------------------------------------------");
         System.out.printf("%-15s %-20s %-20s %n", "Gym ID", "Name", "Location");
@@ -52,7 +60,7 @@ public class GymOwnerService {
         System.out.println("Owner details updated successfully.");
     }
 
-    public void displayGymOwnerMenu() {
+    public void displayGymOwnerMenu(String loggedInOwnerId) {
         boolean exitOwnerMenu = false;
         while (!exitOwnerMenu) {
             System.out.println("\n*** Welcome, Gym Owner! ***");
@@ -74,8 +82,6 @@ public class GymOwnerService {
                         System.out.println("\n--- Add a New Gym Centre ---");
                         System.out.print("Enter gym ID: ");
                         String gymId = in.nextLine();
-                        System.out.print("Enter owner ID: ");
-                        String ownerId = in.nextLine();
                         System.out.print("Enter gym name: ");
                         String name = in.nextLine();
                         System.out.print("Enter gym capacity: ");
@@ -85,7 +91,7 @@ public class GymOwnerService {
                         System.out.print("Enter gym state: ");
                         String state = in.nextLine();
 
-                        String[] newGymData = new String[]{gymId, ownerId, name, capacity, "false", city, state};
+                        String[] newGymData = new String[]{gymId, loggedInOwnerId, name, capacity, "false", city, state};
                         addCentre(newGymData);
 
                         System.out.println("Gym Centre with name " + name + " and location " + city + ", " + state + " added. Do you want to add another? (yes/no)");
@@ -96,7 +102,7 @@ public class GymOwnerService {
                     }
                     break;
                 case 2:
-                    viewGymDetails();
+                    viewGymDetails(loggedInOwnerId);
                     break;
                 case 3:
                     viewCustomers();
@@ -121,54 +127,53 @@ public class GymOwnerService {
                         System.out.print("Enter your choice: ");
                         int editChoice = in.nextInt();
                         in.nextLine(); // Consume newline
-                        String ownerId = "1"; // Placeholder ownerId.
                         String newValue;
 
                         switch (editChoice) {
                             case 1:
                                 System.out.print("Enter new name: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 1, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 1, newValue);
                                 break;
                             case 2:
                                 System.out.print("Enter new email: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 2, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 2, newValue);
                                 break;
                             case 3:
                                 System.out.print("Enter new password: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 3, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 3, newValue);
                                 break;
                             case 4:
                                 System.out.print("Enter new phone number: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 4, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 4, newValue);
                                 break;
                             case 5:
                                 System.out.print("Enter new city: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 5, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 5, newValue);
                                 break;
                             case 6:
                                 System.out.print("Enter new pincode: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 6, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 6, newValue);
                                 break;
                             case 7:
                                 System.out.print("Enter new PAN: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 7, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 7, newValue);
                                 break;
                             case 8:
                                 System.out.print("Enter new Aadhaar: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 8, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 8, newValue);
                                 break;
                             case 9:
                                 System.out.print("Enter new GST: ");
                                 newValue = in.nextLine();
-                                editGymOwnerDetails(ownerId, 9, newValue);
+                                editGymOwnerDetails(loggedInOwnerId, 9, newValue);
                                 break;
                             case 10:
                                 continueEditing = false;
