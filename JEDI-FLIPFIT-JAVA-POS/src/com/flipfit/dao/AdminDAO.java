@@ -43,7 +43,7 @@ public class AdminDAO {
     // Corrected method to get all gym owners by filtering the users
     public List<String[]> getAllGymOwners() {
         return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("OWNER"))
+                .filter(user -> user[0].equals("OWNER") && user[11].equalsIgnoreCase("true"))
                 .collect(Collectors.toList());
     }
 
