@@ -86,12 +86,16 @@ public class ApplicationClient {
 
         String email = getValidEmailInput(); // Call validation for email
         String password = getPasswordInput(); // Reusing method for password input
+        long phone = getValidPhoneInput(); // Call validation for phone number
 
-        String phone = getValidPhoneInput(); // Call validation for phone number
+        String city = scanner.nextLine();
+        int pincode = scanner.nextInt();
+        int paymentType = scanner.nextInt();
+        String paymentInfo = scanner.nextLine();
+
 
         System.out.println("Registration received for customer: " + name);
-        authenticationService.registerCustomer(name, email, password, phone);
-        System.out.println("Registration Successful");
+        authenticationService.registerCustomer(name, email, password, phone, city, pincode, paymentType, paymentInfo);
     }
 
     public void registerOwner() {
@@ -102,7 +106,7 @@ public class ApplicationClient {
         String email = getValidEmailInput(); // Call validation for email
         String password = getPasswordInput(); // Reusing method for password input
 
-        String phone = getValidPhoneInput(); // Call validation for phone number
+        long phone = getValidPhoneInput(); // Call validation for phone number
 
         System.out.print("Enter your aadhaar number: ");
         String aadhaar = scanner.nextLine();
@@ -139,13 +143,13 @@ public class ApplicationClient {
      * Prompts for and validates 10-digit phone number input.
      * @return A valid 10-digit phone number string.
      */
-    private String getValidPhoneInput() {
+    private long getValidPhoneInput() {
         String phone;
         while (true) {
             System.out.print("Enter your phone number (10 digits): ");
             phone = scanner.nextLine();
             if (isValidPhoneNumber(phone)) {
-                return phone;
+                return Long.parseLong(phone);
             } else {
                 System.out.println("Invalid phone number format. Please enter exactly 10 digits.");
             }
