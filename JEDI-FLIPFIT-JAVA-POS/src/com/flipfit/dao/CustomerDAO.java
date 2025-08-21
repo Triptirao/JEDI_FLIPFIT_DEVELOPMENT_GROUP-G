@@ -26,6 +26,4 @@ public class CustomerDAO {
         bookings.add(bookingDetails);
     }
 
-//    public List<String[]> getAllCustomers() {
-//    }
 }
