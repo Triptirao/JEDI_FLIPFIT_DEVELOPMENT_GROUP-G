@@ -1,69 +1,175 @@
 package com.flipfit.dao;
 
-import com.sun.tools.jconsole.JConsoleContext;
-
+import com.flipfit.utils.DBConnection;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AdminDAO {
 
-    // Injecting the new DAOs
-    private UserDAO userDao;
-    private GymOwnerDAO gymOwnerDAO;
-
-    public AdminDAO() {
-        this.userDao = new UserDAO();
-        this.gymOwnerDAO = new GymOwnerDAO();
-    }
-
     public List<String[]> getPendingGymRequests() {
-        return gymOwnerDAO.getPendingGymRequests();
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT centreId, name FROM gymCentre WHERE approved = false";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] gym = new String[2];
+                gym[0] = String.valueOf(rs.getInt("centreId"));
+                gym[1] = rs.getString("name");
+                gyms.add(gym);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
     public void approveGymRequest(String gymId) {
-        gymOwnerDAO.approveGymRequest(gymId);
+        String sql = "UPDATE gymCentre SET approved = true WHERE centreId = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, gymId);
+            pstmt.executeUpdate();
+            System.out.println("Gym request for " + gymId + " approved successfully.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<String[]> getPendingGymOwnerRequests() {
-        return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("OWNER") && user[11].equals("false")) // Assuming Approved field is at index 8 for GymOwner in UserDAO
-                .collect(Collectors.toList());
+        List<String[]> owners = new ArrayList<>();
+        String sql = "SELECT u.userId, u.fullName, u.email FROM user u INNER JOIN gymOwner go ON u.userId = go.userId INNER JOIN role r ON u.roleId = r.id LEFT JOIN gymCentre gc ON go.userId = gc.ownerId WHERE r.role = 'gymowner' AND gc.approved IS NULL OR gc.approved = false";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] user = new String[3];
+                user[0] = String.valueOf(rs.getInt("userId"));
+                user[1] = rs.getString("fullName");
+                user[2] = rs.getString("email");
+                owners.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return owners;
     }
 
     public void approveGymOwnerRequest(String email) {
-        userDao.getAllUsers().stream()
-                .filter(user -> user[3].equals(email))
-                .findFirst()
-                .ifPresent(user -> user[11] = "true"); // Assuming Approved field is at index 8
+        // This operation is now handled by approveGymRequest, as approval is tied to the gymCentre
+        // A direct 'approve' on the user isn't possible with the current schema.
+        // You might need to approve a user after they create their gym.
+        // For simplicity, this method is no longer directly functional without a corresponding change in application logic.
+        System.out.println("Approval is handled by approving a gym request. No user-level approval column exists.");
     }
 
     public List<String[]> getAllGyms() {
-        return GymOwnerDAO.getAllGyms();
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT centreId, name, city FROM gymCentre";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] gym = new String[3];
+                gym[0] = String.valueOf(rs.getInt("centreId"));
+                gym[1] = rs.getString("name");
+                gym[2] = rs.getString("city");
+                gyms.add(gym);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
-    // Corrected method to get all gym owners by filtering the users
     public List<String[]> getAllGymOwners() {
-        return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("OWNER") && user[11].equalsIgnoreCase("true"))
-                .collect(Collectors.toList());
+        List<String[]> owners = new ArrayList<>();
+        String sql = "SELECT u.userId, u.fullName, u.email FROM user u INNER JOIN gymOwner go ON u.userId = go.userId INNER JOIN gymCentre gc ON go.userId = gc.ownerId WHERE gc.approved = true";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] user = new String[3];
+                user[0] = String.valueOf(rs.getInt("userId"));
+                user[1] = rs.getString("fullName");
+                user[2] = rs.getString("email");
+                owners.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return owners;
     }
 
     public List<String[]> getAllUsers() {
-        return userDao.getAllUsers();
+        List<String[]> users = new ArrayList<>();
+        String sql = "SELECT u.userId, u.fullName, u.email, r.role FROM user u INNER JOIN role r ON u.roleId = r.id";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] user = new String[4];
+                user[0] = String.valueOf(rs.getInt("userId"));
+                user[1] = rs.getString("fullName");
+                user[2] = rs.getString("email");
+                user[3] = rs.getString("role");
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
     }
 
+    // In AdminDAO.java
+
     public List<String[]> getAllCustomers() {
-        return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("CUSTOMER"))
-                .collect(Collectors.toList());
+        List<String[]> customers = new ArrayList<>();
+        String sql = "SELECT u.userId, u.fullName, u.email, u.userPhone, u.city, u.pincode FROM user u INNER JOIN role r ON u.roleId = r.id WHERE r.role = 'customer'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String[] user = new String[6]; // Change size to 6
+                user[0] = String.valueOf(rs.getInt("userId"));
+                user[1] = rs.getString("fullName");
+                user[2] = rs.getString("email");
+                user[3] = rs.getString("userPhone");
+                user[4] = rs.getString("city");
+                user[5] = String.valueOf(rs.getInt("pincode"));
+                customers.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return customers;
     }
 
     public void deleteUser(String userId) {
-        userDao.deleteUser(userId);
+        String sql = "DELETE FROM user WHERE userId = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.executeUpdate();
+            System.out.println("User with ID " + userId + " deleted.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteGym(String gymId) {
-        gymOwnerDAO.deleteGym(gymId);
+        String sql = "DELETE FROM gymCentre WHERE centreId = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, gymId);
+            pstmt.executeUpdate();
+            System.out.println("Gym with ID " + gymId + " deleted.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -56,14 +56,15 @@ public class AdminService {
         }
 
         System.out.println("--------------------------------------------------");
-        System.out.printf("%-10s %-20s %-15s%n", "ID", "Name", "City");
+        System.out.printf("%-10s %-20s%n", "ID", "Name");
         System.out.println("--------------------------------------------------");
         for (String[] gym : pendingGyms) {
-            System.out.printf("%-10s %-20s %-15s%n", gym[0], gym[2], gym[6]);
+            System.out.printf("%-10s %-20s%n", gym[0], gym[1]);
         }
         System.out.println("--------------------------------------------------");
     }
 
+    // Edited method to fix the ArrayIndexOutOfBoundsException
     public void viewPendingGymOwners() {
         System.out.println("Fetching all pending gym owner requests...");
         List<String[]> pendingOwners = adminDao.getPendingGymOwnerRequests();
@@ -73,10 +74,10 @@ public class AdminService {
         }
 
         System.out.println("--------------------------------------------------");
-        System.out.printf("%-30s %-20s %-15s%n", "Email", "Name", "Approved");
+        System.out.printf("%-30s %-20s%n", "Email", "Name");
         System.out.println("--------------------------------------------------");
         for (String[] owner : pendingOwners) {
-            System.out.printf("%-30s %-20s %-15s%n", owner[3], owner[2], owner[11].equals("true") ? "Yes" : "No");
+            System.out.printf("%-30s %-20s%n", owner[2], owner[1]);
         }
         System.out.println("--------------------------------------------------");
     }
@@ -89,11 +90,8 @@ public class AdminService {
         for (String[] gym : allGyms) {
             System.out.println("------------------------------------");
             System.out.println("Centre ID: " + gym[0]);
-            System.out.println("Owner ID: " + gym[1]);
-            System.out.println("Name: " + gym[2]);
-            System.out.println("Capacity: " + gym[3]);
-            System.out.println("City: " + gym[5]);
-            System.out.println("State: " + gym[6]);
+            System.out.println("Name: " + gym[1]);
+            System.out.println("City: " + gym[2]);
             System.out.println("------------------------------------");
         }
     }
@@ -105,15 +103,9 @@ public class AdminService {
         System.out.println("Displaying all registered gym owners:");
         for (String[] owner : allOwners) {
             System.out.println("------------------------------------");
-            System.out.println("User ID: " + owner[1]);
-            System.out.println("Full Name: " + owner[2]);
-            System.out.println("Email: " + owner[3]);
-            System.out.println("Phone number: " + owner[5]);
-            System.out.println("City: " + owner[6]);
-            System.out.println("Pincode: " + owner[7]);
-            System.out.println("PAN: " + owner[8]);
-            System.out.println("Aadhaar: " + owner[9]);
-            System.out.println("GST: " + owner[10]);
+            System.out.println("User ID: " + owner[0]);
+            System.out.println("Full Name: " + owner[1]);
+            System.out.println("Email: " + owner[2]);
             System.out.println("------------------------------------");
         }
     }
@@ -125,12 +117,12 @@ public class AdminService {
         System.out.println("Displaying all registered customers:");
         for (String[] customer : allCustomers) {
             System.out.println("------------------------------------");
-            System.out.println("User ID: " + customer[1]);
-            System.out.println("Full Name: " + customer[2]);
-            System.out.println("Email: " + customer[3]);
-            System.out.println("Phone number: " + customer[5]);
-            System.out.println("City: " + customer[6]);
-            System.out.println("Pincode: " + customer[7]);
+            System.out.println("User ID: " + customer[0]);
+            System.out.println("Full Name: " + customer[1]);
+            System.out.println("Email: " + customer[2]);
+            System.out.println("Phone number: " + customer[3]);
+            System.out.println("City: " + customer[4]);
+            System.out.println("Pincode: " + customer[5]);
             System.out.println("------------------------------------");
         }
     }
