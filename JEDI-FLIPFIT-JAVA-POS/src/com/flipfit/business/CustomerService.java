@@ -33,7 +33,7 @@ public class CustomerService {
     }
 
     public void makePayments(int paymentType, String paymentInfo) {
-        System.out.println("Processing payment of type: " + paymentType + " with info: " + paymentInfo);
+        System.out.println("Processing payment of type: " + paymentType + " with account: " + paymentInfo);
     }
 
     public void editCustomerDetails(String customerId, int choice, String newValue) {

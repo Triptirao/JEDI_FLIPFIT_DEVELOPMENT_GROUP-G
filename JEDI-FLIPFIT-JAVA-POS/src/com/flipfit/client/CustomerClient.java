@@ -101,7 +101,7 @@ public class CustomerClient {
         System.out.print("Enter payment type (1 for Credit Card, 2 for Debit Card, etc.): ");
         int paymentType = in.nextInt();
         in.nextLine(); // Consume newline
-        System.out.print("Enter payment info: ");
+        System.out.print("Enter account number: ");
         String paymentInfo = in.nextLine();
 
         customerService.makePayments(paymentType, paymentInfo);
