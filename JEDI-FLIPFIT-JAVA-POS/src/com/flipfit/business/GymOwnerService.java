@@ -7,7 +7,7 @@ import com.flipfit.dao.UserDAO;
 import java.util.List;
 import java.util.Scanner;
 
-public class GymOwnerService {
+public class GymOwnerService implements gymOwnerInterface {
 
     private static final Scanner in = new Scanner(System.in);
     private GymOwnerDAO gymOwnerDao;

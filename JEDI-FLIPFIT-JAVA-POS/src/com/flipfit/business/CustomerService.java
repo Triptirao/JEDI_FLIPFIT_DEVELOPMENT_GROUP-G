@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public class CustomerService {
+public class CustomerService implements customerInterface {
 
     private CustomerDAO customerDao;
     private GymOwnerDAO gymOwnerDao;
