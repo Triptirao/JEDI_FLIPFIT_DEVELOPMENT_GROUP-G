@@ -115,6 +115,6 @@ public class ApplicationClient {
 
         System.out.println("Registration received for Owner: " + name);
         authenticationService.registerGymOwner(name, email, password, phone, aadhaar, pan,gst);
-        System.out.println("Registration Successful");
+//        System.out.println("Registration Successful");
     }
 }
