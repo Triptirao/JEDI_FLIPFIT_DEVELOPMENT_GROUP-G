@@ -79,7 +79,7 @@ public class CustomerClient {
         } else {
             System.out.println("Booking Details:");
             for (String[] booking : bookings) {
-                System.out.println("Booking ID: " + booking[0] + ", Slot ID: " + booking[2] + ", Centre ID: " + booking[3]);
+                System.out.println("Booking ID: " + booking[0] + ", Slot Time: " + booking[2] + ", Centre: " + booking[3]);
             }
         }
     }
