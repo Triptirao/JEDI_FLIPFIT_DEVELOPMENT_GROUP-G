@@ -1,14 +1,12 @@
 package com.flipfit.client;
 
-import com.flipfit.business.AdminService;
-import com.flipfit.business.AuthenticationService;
-import com.flipfit.business.CustomerService;
-import com.flipfit.business.GymOwnerService;
+import com.flipfit.business.*;
 import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -17,7 +15,7 @@ import java.util.regex.Pattern;
 public class ApplicationClient {
 
     private final Scanner scanner = new Scanner(System.in);
-    private final AuthenticationService authenticationService;
+    private final authenticationInterface authenticationService;
     private final AdminService adminService;
     private final GymOwnerService gymOwnerService;
     private final CustomerService customerService;
@@ -88,9 +86,13 @@ public class ApplicationClient {
         String password = getPasswordInput(); // Reusing method for password input
         long phone = getValidPhoneInput(); // Call validation for phone number
 
+        System.out.print("Enter your city: ");
         String city = scanner.nextLine();
-        int pincode = scanner.nextInt();
-        int paymentType = scanner.nextInt();
+
+        int pincode = getValidPincodeInput(); // Call validation for pin code
+        int paymentType = getValidPaymentType(); // Call validation for payment type
+
+        System.out.print("Enter your paymentInfo (UPI Id or Card Number): ");
         String paymentInfo = scanner.nextLine();
 
 
@@ -152,6 +154,32 @@ public class ApplicationClient {
                 return Long.parseLong(phone);
             } else {
                 System.out.println("Invalid phone number format. Please enter exactly 10 digits.");
+            }
+        }
+    }
+
+    private int getValidPincodeInput() {
+        String pincode;
+        while (true) {
+            System.out.print("Enter your pin code (6 digits): ");
+            pincode = scanner.nextLine();
+            if (pincode.matches("\\d{6}")) {
+                return Integer.parseInt(pincode);
+            } else {
+                System.out.println("Invalid pin code format. Please enter exactly 6 digits.");
+            }
+        }
+    }
+
+    private int getValidPaymentType() {
+        String paymentType;
+        while (true) {
+            System.out.print("Enter your paymentType (1 for UPI or 2 for Card Payment) : ");
+            paymentType = scanner.nextLine();
+            if (!Objects.equals(paymentType, "1") && !Objects.equals(paymentType, "2")) {
+                System.out.println("Invalid, please enter valid payment type");
+            } else {
+                return Integer.parseInt(paymentType);
             }
         }
     }
