@@ -1,10 +1,8 @@
 package com.flipfit.client;
 
+import com.flipfit.bean.Booking;
 import com.flipfit.business.CustomerService;
-import com.flipfit.dao.CustomerDAO;
-import com.flipfit.dao.GymOwnerDAO;
-import com.flipfit.dao.UserDAO;
-import com.flipfit.dao.GymCentreDAO;
+import com.flipfit.dao.*;
 
 import java.util.List;
 import java.util.Scanner;
@@ -35,7 +33,8 @@ public class CustomerClient {
             System.out.println("2. View Gym Centers");
             System.out.println("3. Make Payments");
             System.out.println("4. Edit Details");
-            System.out.println("5. Exit");
+            System.out.println("5. Book a slot");
+            System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
 
             int choice;
@@ -62,24 +61,58 @@ public class CustomerClient {
                     editDetails();
                     break;
                 case 5:
-                    System.out.println("Exiting Customer Menu...");
-                    exitCustomerMenu = true;
+                    bookaSlot();
                     break;
+                    case 6:
+                        System.out.println("Exiting Customer Menu...");
+                        exitCustomerMenu = true;
+                        break;
                 default:
                     System.out.println("Invalid number. Please try again.");
             }
         }
     }
+    private void bookaSlot() {
+        CustomerDAO customerDao = new CustomerDAO();
+        UserDAO userDao = new UserDAO();
+        GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
+        GymCentreDAO gymCentreDao = new GymCentreDAO();
 
+        CustomerService customerService = new CustomerService(customerDao, userDao, gymOwnerDao, gymCentreDao);
+
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("--- Book a Slot ---");
+        System.out.print("Enter Booking ID: ");
+        int bookingId = scanner.nextInt();
+
+        System.out.print("Enter Customer ID: ");
+        int customerId = scanner.nextInt();
+
+        System.out.print("Enter Gym ID: ");
+        int gymId = scanner.nextInt();
+
+        System.out.print("Enter Slot ID: ");
+        int slotId = scanner.nextInt();
+
+        customerService.bookSlot(bookingId, customerId, gymId, slotId);
+    }
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
-        List<String[]> bookings = customerService.viewBookedSlots(loggedInCustomerId);
+
+        // Assuming `loggedInCustomerId` is a String and `customerService` is a valid instance.
+        // The `viewBookedSlots` method on customerService should return List<Booking>
+        // to be consistent with this code block.
+        List<Booking> bookings = customerService.viewBookedSlots(loggedInCustomerId);
+
         if (bookings.isEmpty()) {
             System.out.println("No booked slots found.");
         } else {
             System.out.println("Booking Details:");
-            for (String[] booking : bookings) {
-                System.out.println("Booking ID: " + booking[0] + ", Slot Time: " + booking[2] + ", Centre: " + booking[3]);
+            for (Booking booking : bookings) {
+                System.out.println("Booking ID: " + booking.getBookingId() +
+                        ", Slot ID: " + booking.getSlotId() +
+                        ", Gym ID: " + booking.getGymId());
             }
         }
     }
