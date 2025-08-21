@@ -7,17 +7,17 @@ public class GymCentre {
     private int centreId;
     private int ownerId;
     private String name;
-    private List<String> slots;
+    private String slots;
     private int capacity;
     private boolean approved;
     private String city;
     private String state;
     private String pincode;
-    private List<String> facilities;
+    private String facilities;
     public GymCentre() {
     }
 
-    public GymCentre(int centreId, int ownerId, String name, List<String> slots, int capacity, boolean approved, String city, String state, String pincode, List<String> facilities) {
+    public GymCentre(int centreId, int ownerId, String name, String slots, int capacity, boolean approved, String city, String state, String pincode, String facilities) {
         this.centreId = centreId;
         this.ownerId = ownerId;
         this.name = name;
@@ -54,11 +54,11 @@ public class GymCentre {
         this.name = name;
     }
 
-    public List<String> getSlots() {
+    public String getSlots() {
         return slots;
     }
 
-    public void setSlots(List<String> slots) {
+    public void setSlots(String slots) {
         this.slots = slots;
     }
 
@@ -102,11 +102,11 @@ public class GymCentre {
         this.pincode = pincode;
     }
 
-    public List<String> getFacilities() {
+    public String getFacilities() {
         return facilities;
     }
 
-    public void setFacilities(List<String> facilities) {
+    public void setFacilities(String facilities) {
         this.facilities = facilities;
     }
 }
