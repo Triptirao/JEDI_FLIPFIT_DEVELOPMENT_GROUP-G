@@ -1,100 +1,193 @@
 package com.flipfit.dao;
-
+import com.flipfit.utils.DBConnection;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class GymOwnerDAO {
 
-    // This DAO now relies on other DAOs for core data.
-    private UserDAO userDao = new UserDAO();
-
-    // Data for Gym Owners
-    private static List<String[]> gymOwners = new ArrayList<>();
-    // Data for Gym Centres
-    private static List<String[]> gymCentres = new ArrayList<>();
-
-    static {
-        // Hardcoded data for Gym Owners: {Role, ID, Name, Email, Password, Phone, City, Pincode, PAN, Aadhaar, GST, Approved}
-        gymOwners.add(new String[]{"OWNER", "1", "Ravi Sharma", "ravi.sharma@example.com", "secure123", "9876543210", "Bengaluru", "560001", "ABCDE1234F", "123456789012", "29ABCDE1234F1Z5", "true"});
-
-        // Hardcoded data for Gym Centres: {ID, OwnerID, Name, Slots, Capacity, Approved, City, State}
-        gymCentres.add(new String[]{"1", "101", "Fitness Hub", "slot1,slot2,slot3", "50", "false", "Bengaluru", "Karnataka"});
-        gymCentres.add(new String[]{"2", "102", "Zenith Fitness", "slot1,slot2,slot3", "75", "true", "Bengaluru", "Karnataka"});
-        gymCentres.add(new String[]{"3", "103", "Flex Gym", "slot1,slot2", "45", "false", "Mumbai", "Maharashtra"});
-    }
-
     public void addGym(String[] gym) {
-        gymCentres.add(gym);
+        String sql = "INSERT INTO `gymCentres` (`centreId`, `ownerId`, `name`, `slots`, `capacity`, `approved`, `city`, `state`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, Integer.parseInt(gym[0])); // ID
+            pstmt.setInt(2, Integer.parseInt(gym[1])); // OwnerID
+            pstmt.setString(3, gym[2]); // Name
+            pstmt.setString(4, gym[3]); // Slots
+            pstmt.setInt(5, Integer.parseInt(gym[4])); // Capacity
+            pstmt.setBoolean(6, Boolean.parseBoolean(gym[5])); // Approved
+            pstmt.setString(7, gym[6]); // City
+            pstmt.setString(8, gym[7]); // State
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<String[]> getGymsByOwnerId(String ownerId) {
-        return gymCentres.stream()
-                .filter(gym -> gym[1].equals(ownerId))
-                .collect(Collectors.toList());
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT * FROM `gymCentres` WHERE `ownerId` = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, Integer.parseInt(ownerId));
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                gyms.add(new String[]{
+                        String.valueOf(rs.getInt("centreId")),
+                        String.valueOf(rs.getInt("ownerId")),
+                        rs.getString("name"),
+                        rs.getString("slots"),
+                        String.valueOf(rs.getInt("capacity")),
+                        String.valueOf(rs.getBoolean("approved")),
+                        rs.getString("city"),
+                        rs.getString("state")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
+    // This method will now fetch from a hypothetical `customers` table
     public List<String[]> getAllCustomers() {
-        return userDao.getAllUsers().stream()
-                .filter(user -> user[0].equals("CUSTOMER"))
-                .collect(Collectors.toList());
+        // This would require a database connection and a query to a `users` table
+        // filtering for the CUSTOMER role.
+        return new ArrayList<>();
     }
 
     public List<String[]> getPaymentsByGym(String gymId) {
-        // This would be implemented by a PaymentDAO in a real application
         return new ArrayList<>();
     }
 
     public static List<String[]> getAllGyms() {
-        return gymCentres;
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT * FROM `gymCentres`";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                gyms.add(new String[]{
+                        String.valueOf(rs.getInt("centreId")),
+                        String.valueOf(rs.getInt("ownerId")),
+                        rs.getString("name"),
+                        rs.getString("slots"),
+                        String.valueOf(rs.getInt("capacity")),
+                        String.valueOf(rs.getBoolean("approved")),
+                        rs.getString("city"),
+                        rs.getString("state")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
     public List<String[]> getPendingGymRequests() {
-        return gymCentres.stream()
-                .filter(gym -> gym[5].equals("false"))
-                .collect(Collectors.toList());
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT * FROM `gymCentres` WHERE `approved` = FALSE";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                gyms.add(new String[]{
+                        String.valueOf(rs.getInt("centreId")),
+                        String.valueOf(rs.getInt("ownerId")),
+                        rs.getString("name"),
+                        rs.getString("slots"),
+                        String.valueOf(rs.getInt("capacity")),
+                        String.valueOf(rs.getBoolean("approved")),
+                        rs.getString("city"),
+                        rs.getString("state")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
     public void approveGymRequest(String gymId) {
-        gymCentres.stream()
-                .filter(gym -> gym[0].equals(gymId))
-                .findFirst()
-                .ifPresent(gym -> gym[5] = "true");
+        String sql = "UPDATE `gymCentres` SET `approved` = TRUE WHERE `centreId` = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, Integer.parseInt(gymId));
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteGym(String gymId) {
-        gymCentres.removeIf(gym -> gym[0].equals(gymId));
+        String sql = "DELETE FROM `gymCentres` WHERE `centreId` = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, Integer.parseInt(gymId));
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<String[]> getApprovedGyms() {
-        return gymCentres.stream()
-                .filter(gym -> gym[5].equals("true"))
-                .collect(Collectors.toList());
+        List<String[]> gyms = new ArrayList<>();
+        String sql = "SELECT * FROM `gymCentres` WHERE `approved` = TRUE";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                gyms.add(new String[]{
+                        String.valueOf(rs.getInt("centreId")),
+                        String.valueOf(rs.getInt("ownerId")),
+                        rs.getString("name"),
+                        rs.getString("slots"),
+                        String.valueOf(rs.getInt("capacity")),
+                        String.valueOf(rs.getBoolean("approved")),
+                        rs.getString("city"),
+                        rs.getString("state")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gyms;
     }
 
-    /**
-     * Updates the details of a gym owner in the hardcoded list.
-     * @param ownerId The ID of the owner to update.
-     * @param choice The detail to change (1=Name, 2=Email, 3=Password, 4=Phone, 5=City, 6=Pincode, 7=PAN, 8=Aadhaar, 9=GST).
-     * @param newValue The new value for the detail.
-     */
     public void updateGymOwnerDetails(String ownerId, int choice, String newValue) {
-        userDao.getAllUsers().stream()
-                .filter(user -> user[1].equals(ownerId))
-                .findFirst()
-                .ifPresent(owner -> {
-                    switch (choice) {
-                        case 1: owner[2] = newValue; break; // Name
-                        case 2: owner[3] = newValue; break; // Email
-                        case 3: owner[4] = newValue; break; // Password
-                        case 4: owner[5] = newValue; break; // Phone
-                        case 5: owner[6] = newValue; break; // City
-                        case 6: owner[7] = newValue; break; // Pincode
-                        case 7: owner[8] = newValue; break; // PAN (Assuming this is the correct index)
-                        case 8: owner[9] = newValue; break; // Aadhaar (Assuming this is the correct index)
-                        case 9: owner[10] = newValue; break; // GST (Assuming this is the correct index)
-                    }
-                });
+        String columnName = getColumnNameForChoice(choice);
+        if (columnName == null) {
+            return; // Invalid choice
+        }
+
+        String sql = "UPDATE `gymOwners` SET `" + columnName + "` = ? WHERE `userId` = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newValue);
+            pstmt.setInt(2, Integer.parseInt(ownerId));
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getColumnNameForChoice(int choice) {
+        switch (choice) {
+            case 1: return "fullName";
+            case 2: return "email";
+            case 3: return "password";
+            case 4: return "userPhone";
+            case 5: return "city";
+            case 6: return "pinCode";
+            case 7: return "pan";
+            case 8: return "aadhaar";
+            case 9: return "gst";
+            default: return null;
+        }
     }
 }
