@@ -9,7 +9,7 @@ import com.flipfit.dao.UserDAO;
 import java.util.List;
 import java.util.Scanner;
 
-public class AdminService {
+public class AdminService implements adminInterface{
 
     private static final Scanner in = new Scanner(System.in);
     private AdminDAO adminDao;

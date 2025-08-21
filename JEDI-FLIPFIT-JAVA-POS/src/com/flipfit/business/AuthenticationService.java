@@ -2,7 +2,7 @@ package com.flipfit.business;
 
 import com.flipfit.dao.UserDAO;
 
-public class AuthenticationService {
+public class AuthenticationService implements authenticationInterface {
 
     private UserDAO userDao;
 
