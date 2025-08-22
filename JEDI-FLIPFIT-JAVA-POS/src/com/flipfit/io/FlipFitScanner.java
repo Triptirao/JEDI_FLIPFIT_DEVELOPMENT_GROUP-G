@@ -10,12 +10,15 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class FlipFitScanner {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         // Instantiate the DAOs first
         UserDAO userDao = new UserDAO();
-        AdminDAO adminDao = new AdminDAO();
         GymOwnerDAO gymOwnerDao = new GymOwnerDAO();
         CustomerDAO customerDao = new CustomerDAO();
+
+        // AdminDAO constructor requires other DAOs
+        AdminDAO adminDao = new AdminDAO(userDao, customerDao, gymOwnerDao);
+
 
         // Pass the DAOs to the ApplicationClient's constructor
         ApplicationClient applicationClient = new ApplicationClient(userDao, adminDao, gymOwnerDao, customerDao);
@@ -29,7 +32,7 @@ public class FlipFitScanner {
             System.out.println("2. Register as Customer");
             System.out.println("3. Register as Owner");
             System.out.println("4. Exit");
-            int op = 0;
+            int op ;
             try {
                 op = in.nextInt();
                 in.nextLine(); // Consume newline
