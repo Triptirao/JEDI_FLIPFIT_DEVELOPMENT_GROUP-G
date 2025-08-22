@@ -1,134 +1,160 @@
 package com.flipfit.dao;
 
-import com.flipfit.bean.Customer;
 import com.flipfit.bean.User;
 import com.flipfit.utils.DBConnection;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class UserDAO {
 
-    private static List<String[]> users = new ArrayList<>();
-    private static final AtomicInteger userIdCounter = new AtomicInteger(0);
+    private static final String SELECT_ALL_CUSTOMERS = "SELECT u.* FROM User u JOIN Customer c ON u.userId = c.customerId";
+    private static final String INSERT_USER = "INSERT INTO `User` (fullName, email, password, userPhone, city, pinCode) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SELECT_ALL_USERS = "SELECT * FROM `User`";
+    private static final String SELECT_USER_BY_ID = "SELECT * FROM `User` WHERE userId = ?";
+    private static final String SELECT_USER_BY_EMAIL_PASSWORD = "SELECT * FROM `User` WHERE email = ? AND password = ?";
+    private static final String DELETE_USER = "DELETE FROM `User` WHERE userId = ?";
+    private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, password = ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
+    private static final String SELECT_ALL_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = TRUE";
 
-    static {
-        // Dummy data for users: {Role, ID, Name, Email, Password, Phone, City, Pincode}
-        users.add(new String[]{"ADMIN", "1", "Admin User", "admin@flipfit.com", "admin123", "9876543210", "New Delhi", "110001"});
-    }
 
     public int addUser(User user) {
-        int generatedId = -1;
-        String sql = "INSERT INTO `user` (`fullName`, `email`, `password`, `userPhone`, `city`, `pincode`, `roleId`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        int userId = -1;
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setLong(4, user.getUserPhone());
+            ps.setString(5, user.getCity());
+            ps.setInt(6, user.getPinCode());
+            ps.executeUpdate();
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                userId = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userId;
+    }
+    public List<User> getAllCustomers() {
+        List<User> customers = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_ALL_CUSTOMERS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                customers.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return customers;
+    }
 
-            pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getEmail());
-            pstmt.setString(3, user.getPassword());
-            pstmt.setLong(4, user.getUserPhone());
-            pstmt.setString(5, user.getCity());
-            pstmt.setInt(6, user.getPinCode());
-            pstmt.setInt(7, user.getId());
 
-            // Execute the update
-            int affectedRows = pstmt.executeUpdate();
+    public List<User> getAllUsers() {
+        List<User> userList = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_ALL_USERS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                userList.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userList;
+    }
 
-            if (affectedRows > 0) {
-                // Retrieve the generated key
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        // The first column in the ResultSet is the generated key
-                        generatedId = generatedKeys.getInt(1);
-                    }
+    public Optional<User> getUserById(int userId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_USER_BY_ID)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToUser(rs));
                 }
             }
-
-            return generatedId;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return  generatedId;
+        return Optional.empty();
     }
 
-    public boolean addCustomer(Customer customer) {
-        String sql = "INSERT INTO `customer` (`userId`, `paymentType`, `paymentInfo`) VALUES (?, ?, ?)";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            pstmt.setInt(1, customer.getUserId());
-            pstmt.setInt(2, customer.getPaymentType());
-            pstmt.setString(3, customer.getPaymentInfo());
-
-            // Execute the update
-            int affectedRows = pstmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                return true;
+    public Optional<User> getUserByEmailAndPassword(String email, String password) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_USER_BY_EMAIL_PASSWORD)) {
+            ps.setString(1, email);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToUser(rs));
+                }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return  false;
+        return Optional.empty();
     }
 
-    public List<String[]> getAllUsers() {
-        return users;
+    public void deleteUser(int userId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Optional<String[]> getUserById(String userId) {
-        return users.stream()
-                .filter(user -> user[1].equals(userId))
-                .findFirst();
+    public void updateUser(User user) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(UPDATE_USER)) {
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setLong(4, user.getUserPhone());
+            ps.setString(5, user.getCity());
+            ps.setInt(6, user.getPinCode());
+            ps.setInt(7, user.getUserId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Optional<String[]> getUserByEmailAndPassword(String email, String password) {
-        return users.stream()
-                .filter(user -> user[3].equals(email) && user[4].equals(password))
-                .findFirst();
+    public List<User> getAllGymOwners() {
+        List<User> gymOwners = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_ALL_GYM_OWNERS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                gymOwners.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return gymOwners;
     }
 
-    public void deleteUser(String userId) {
-        users.removeIf(user -> user[1].equals(userId));
-    }
-
-    public void addUser(String[] userData) {
-        users.add(userData);
-    }
-
-    public String getNextUserId() {
-        return String.valueOf(userIdCounter.incrementAndGet());
-    }
-
-    public void updateUserDetails(String userId, int choice, String newValue) {
-        users.stream()
-                .filter(user -> user[1].equals(userId))
-                .findFirst()
-                .ifPresent(user -> {
-                    switch (choice) {
-                        case 1: // Name
-                            user[2] = newValue;
-                            break;
-                        case 2: // Email
-                            user[3] = newValue;
-                            break;
-                        case 3: // Password
-                            user[4] = newValue;
-                            break;
-                        case 4: // Phone Number
-                            user[5] = newValue;
-                            break;
-                        default:
-                            System.out.println("Invalid choice for update.");
-                    }
-                });
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        User user = new User(
+                rs.getInt("userId"),
+                rs.getString("fullName"),
+                rs.getString("email"),
+                rs.getString("password"),
+                rs.getLong("userPhone"),
+                rs.getString("city"),
+                rs.getInt("pinCode")
+        );
+        user.setRole("CUSTOMER"); // Manually set the role after fetching
+        return user;
     }
 }

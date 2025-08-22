@@ -1,6 +1,9 @@
 package com.flipfit.dao;
 
+import com.flipfit.bean.GymCentre;
+import com.flipfit.bean.User;
 import com.flipfit.utils.DBConnection;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,191 +13,161 @@ import java.util.List;
 
 public class AdminDAO {
 
-    public List<String[]> getPendingGymRequests() {
-        List<String[]> gyms = new ArrayList<>();
-        String sql = "SELECT centreId, name FROM gymCentre WHERE approved = false";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+    private final UserDAO userDao;
+    private final GymOwnerDAO gymOwnerDao;
+    private final CustomerDAO customerDao;
+
+    // SQL queries for GymCentre operations
+    private static final String SELECT_PENDING_GYMS = "SELECT * FROM GymCentre WHERE approved = FALSE";
+    private static final String SELECT_ALL_GYMS = "SELECT * FROM GymCentre";
+    private static final String APPROVE_GYM = "UPDATE GymCentre SET approved = TRUE WHERE centreId = ?";
+    private static final String DELETE_GYM = "DELETE FROM GymCentre WHERE centreId = ?";
+    private static final String APPROVE_GYM_OWNER = "UPDATE `GymOwner` SET isApproved = TRUE WHERE ownerId = (SELECT userId FROM `User` WHERE email = ?)";
+    // ... (other fields and SQL queries)
+    private static final String DELETE_BOOKINGS_BY_USER_ID = "DELETE FROM Booking WHERE customerId = ?";
+    private static final String DELETE_CUSTOMER_BY_USER_ID = "DELETE FROM Customer WHERE customerId = ?";
+    private static final String DELETE_GYMS_BY_OWNER_ID = "DELETE FROM GymCentre WHERE ownerId = ?";
+    private static final String DELETE_GYM_OWNER_BY_USER_ID = "DELETE FROM GymOwner WHERE ownerId = ?";
+    private static final String DELETE_ADMIN_BY_USER_ID = "DELETE FROM Admin WHERE adminId = ?";
+    private static final String DELETE_USER = "DELETE FROM User WHERE userId = ?";
+
+    // The corrected constructor now takes all necessary dependencies
+    public AdminDAO(UserDAO userDao, CustomerDAO customerDao, GymOwnerDAO gymOwnerDao) {
+        this.userDao = userDao;
+        this.customerDao = customerDao;
+        this.gymOwnerDao = gymOwnerDao;
+    }
+
+    public List<GymCentre> getPendingGymRequests() {
+        List<GymCentre> pendingGyms = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_PENDING_GYMS);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                String[] gym = new String[2];
-                gym[0] = String.valueOf(rs.getInt("centreId"));
-                gym[1] = rs.getString("name");
-                gyms.add(gym);
+                pendingGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return gyms;
+        return pendingGyms;
     }
 
-    public void approveGymRequest(String gymId) {
-        String sql = "UPDATE gymCentre SET approved = true WHERE centreId = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, gymId);
-            pstmt.executeUpdate();
-            System.out.println("Gym request for " + gymId + " approved successfully.");
+    public void approveGymRequest(int gymId) {
+        // The query is updated to be a valid prepared statement with one placeholder
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(APPROVE_GYM)) {
+            // Only set the gymId parameter, as 'TRUE' is hardcoded into the query
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public List<String[]> getPendingGymOwnerRequests() {
-        List<String[]> owners = new ArrayList<>();
-        String sql = "SELECT u.userId, u.fullName, u.email FROM user u INNER JOIN gymOwner go ON u.userId = go.userId INNER JOIN role r ON u.roleId = r.id LEFT JOIN gymCentre gc ON go.userId = gc.ownerId WHERE r.role = 'gymowner' AND gc.approved IS NULL OR gc.approved = false";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                String[] user = new String[3];
-                user[0] = String.valueOf(rs.getInt("userId"));
-                user[1] = rs.getString("fullName");
-                user[2] = rs.getString("email");
-                owners.add(user);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return owners;
+    public List<User> getPendingGymOwnerRequests() {
+        return gymOwnerDao.getPendingGymOwners();
     }
 
     public void approveGymOwnerRequest(String email) {
-        String sqlSelect = "SELECT gc.centreId FROM gymCentre gc INNER JOIN gymOwner go ON gc.ownerId = go.userId INNER JOIN user u ON go.userId = u.userId WHERE u.email = ?";
-        String sqlUpdate = "UPDATE gymCentre SET approved = true WHERE centreId = ?";
-
-        try (Connection conn = DBConnection.getConnection()) {
-            int centreIdToApprove = -1;
-
-            try (PreparedStatement pstmtSelect = conn.prepareStatement(sqlSelect)) {
-                pstmtSelect.setString(1, email);
-                try (ResultSet rs = pstmtSelect.executeQuery()) {
-                    if (rs.next()) {
-                        centreIdToApprove = rs.getInt("centreId");
-                    }
-                }
-            }
-
-            if (centreIdToApprove != -1) {
-                try (PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdate)) {
-                    pstmtUpdate.setInt(1, centreIdToApprove);
-                    int rowsAffected = pstmtUpdate.executeUpdate();
-
-                    if (rowsAffected > 0) {
-                        System.out.println("Gym request for owner with email " + email + " approved successfully.");
-                    } else {
-                        System.out.println("No gym request found for owner with email " + email + ".");
-                    }
-                }
-            } else {
-                System.out.println("No pending gym request found for the provided owner email.");
-            }
+        approveGymOwner(email);
+    }
+    public void approveGymOwner(String email) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(APPROVE_GYM_OWNER)) {
+            ps.setString(1, email);
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
-    public List<String[]> getAllGyms() {
-        List<String[]> gyms = new ArrayList<>();
-        String sql = "SELECT centreId, name, city FROM gymCentre";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+    public List<GymCentre> getAllGyms() {
+        List<GymCentre> allGyms = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_ALL_GYMS);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                String[] gym = new String[3];
-                gym[0] = String.valueOf(rs.getInt("centreId"));
-                gym[1] = rs.getString("name");
-                gym[2] = rs.getString("city");
-                gyms.add(gym);
+                allGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return gyms;
+        return allGyms;
     }
 
-    public List<String[]> getAllGymOwners() {
-        List<String[]> owners = new ArrayList<>();
-        String sql = "SELECT u.userId, u.fullName, u.email FROM user u INNER JOIN gymOwner go ON u.userId = go.userId INNER JOIN gymCentre gc ON go.userId = gc.ownerId WHERE gc.approved = true";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                String[] user = new String[3];
-                user[0] = String.valueOf(rs.getInt("userId"));
-                user[1] = rs.getString("fullName");
-                user[2] = rs.getString("email");
-                owners.add(user);
+    public List<User> getAllGymOwners() {
+        return userDao.getAllGymOwners();
+    }
+
+    public List<User> getAllUsers() {
+        return userDao.getAllUsers();
+    }
+
+    public List<User> getAllCustomers() {
+        return userDao.getAllCustomers();
+    }
+
+
+    public void deleteUser(int userId) {
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false); // Start transaction
+
+            // 1. Delete dependent records from child tables first
+            try (PreparedStatement ps1 = con.prepareStatement(DELETE_BOOKINGS_BY_USER_ID)) {
+                ps1.setInt(1, userId);
+                ps1.executeUpdate();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return owners;
-    }
-
-    public List<String[]> getAllUsers() {
-        List<String[]> users = new ArrayList<>();
-        String sql = "SELECT u.userId, u.fullName, u.email, r.role FROM user u INNER JOIN role r ON u.roleId = r.id";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                String[] user = new String[4];
-                user[0] = String.valueOf(rs.getInt("userId"));
-                user[1] = rs.getString("fullName");
-                user[2] = rs.getString("email");
-                user[3] = rs.getString("role");
-                users.add(user);
+            try (PreparedStatement ps2 = con.prepareStatement(DELETE_CUSTOMER_BY_USER_ID)) {
+                ps2.setInt(1, userId);
+                ps2.executeUpdate();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return users;
-    }
-
-    public List<String[]> getAllCustomers() {
-        List<String[]> customers = new ArrayList<>();
-        String sql = "SELECT u.userId, u.fullName, u.email, u.userPhone, u.city, u.pincode FROM user u INNER JOIN role r ON u.roleId = r.id WHERE r.role = 'customer'";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                String[] user = new String[6];
-                user[0] = String.valueOf(rs.getInt("userId"));
-                user[1] = rs.getString("fullName");
-                user[2] = rs.getString("email");
-                user[3] = rs.getString("userPhone");
-                user[4] = rs.getString("city");
-                user[5] = String.valueOf(rs.getInt("pincode"));
-                customers.add(user);
+            try (PreparedStatement ps3 = con.prepareStatement(DELETE_GYMS_BY_OWNER_ID)) {
+                ps3.setInt(1, userId);
+                ps3.executeUpdate();
             }
+            try (PreparedStatement ps4 = con.prepareStatement(DELETE_GYM_OWNER_BY_USER_ID)) {
+                ps4.setInt(1, userId);
+                ps4.executeUpdate();
+            }
+            try (PreparedStatement ps5 = con.prepareStatement(DELETE_ADMIN_BY_USER_ID)) {
+                ps5.setInt(1, userId);
+                ps5.executeUpdate();
+            }
+
+            // 2. Finally, delete the record from the parent User table
+            try (PreparedStatement ps6 = con.prepareStatement(DELETE_USER)) {
+                ps6.setInt(1, userId);
+                ps6.executeUpdate();
+            }
+
+            con.commit(); // Commit the transaction if all operations were successful
         } catch (SQLException e) {
             e.printStackTrace();
+            // Rollback is implicitly handled by the try-with-resources block's closing
         }
-        return customers;
     }
 
-    public void deleteUser(String userId) {
-        String sql = "DELETE FROM user WHERE userId = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, userId);
-            pstmt.executeUpdate();
-            System.out.println("User with ID " + userId + " deleted.");
+    public void deleteGym(int gymId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(DELETE_GYM)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void deleteGym(String gymId) {
-        String sql = "DELETE FROM gymCentre WHERE centreId = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, gymId);
-            pstmt.executeUpdate();
-            System.out.println("Gym with ID " + gymId + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    private GymCentre mapResultSetToGymCentre(ResultSet rs) throws SQLException {
+        return new GymCentre(
+                rs.getInt("centreId"),
+                rs.getInt("ownerId"),
+                rs.getString("name"),
+                rs.getString("slots"),
+                rs.getInt("capacity"),
+                rs.getBoolean("approved"),
+                rs.getString("city"),
+                rs.getString("state"),
+                rs.getString("pincode"),
+                rs.getString("facilities")
+        );
     }
 }
