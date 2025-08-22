@@ -18,6 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Data Access Object (DAO) class for managing customer-related operations in the FlipFit application.
+ * This class handles database interactions for adding, retrieving, and updating customer details,
+ * as well as managing bookings and viewing gyms.
+ *
+ * @author YourName
+ */
 public class CustomerDAO {
 
     // SQL queries for the customers table
@@ -31,6 +38,11 @@ public class CustomerDAO {
 
     private static final String SELECT_APPROVED_GYMS = "SELECT * FROM GymCentre WHERE approved = TRUE";
 
+    /**
+     * Adds a new customer's payment details to the database.
+     * @param customer The Customer object containing the details.
+     * @throws DAOException If a database access error occurs.
+     */
     public void addCustomer(Customer customer) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(INSERT_CUSTOMER_DETAILS)) {
@@ -39,11 +51,16 @@ public class CustomerDAO {
             ps.setString(3, customer.getPaymentInfo());
             ps.executeUpdate();
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException as a custom DAOException
             throw new DAOException("Failed to add customer details.", e);
         }
     }
 
+    /**
+     * Retrieves a customer by their unique user ID.
+     * @param userId The ID of the customer to retrieve.
+     * @return An Optional containing the Customer object if found, otherwise an empty Optional.
+     * @throws DAOException If a database access error occurs.
+     */
     public Optional<Customer> getCustomerById(int userId) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SELECT_CUSTOMER_BY_ID)) {
@@ -54,12 +71,16 @@ public class CustomerDAO {
                 }
             }
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException
             throw new DAOException("Failed to retrieve customer by ID: " + userId, e);
         }
         return Optional.empty();
     }
 
+    /**
+     * Updates an existing customer's payment details.
+     * @param customer The Customer object with updated details.
+     * @throws DAOException If a database access error occurs, or the customer ID is not found.
+     */
     public void updateCustomer(Customer customer) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(UPDATE_CUSTOMER_DETAILS)) {
@@ -71,7 +92,6 @@ public class CustomerDAO {
                 throw new DAOException("Could not update customer. Customer with ID " + customer.getUserId() + " not found.");
             }
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException
             throw new DAOException("Failed to update customer details for ID: " + customer.getUserId(), e);
         }
     }
@@ -79,6 +99,8 @@ public class CustomerDAO {
     /**
      * Books a slot for a customer by inserting a new record into the Booking table.
      * @param booking The Booking object containing all details.
+     * @return The auto-generated booking ID.
+     * @throws DAOException If a database access error occurs.
      */
     public int bookSlot(Booking booking) {
         int bookingId = -1;
@@ -95,20 +117,24 @@ public class CustomerDAO {
             ps.setObject(6, booking.getBookingTime());
             ps.executeUpdate();
 
-            // Retrieve the auto-generated bookingId
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     bookingId = rs.getInt(1);
                 }
             }
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException
             throw new DAOException("Failed to book slot.", e);
         }
 
         return bookingId;
     }
 
+    /**
+     * Retrieves a list of all bookings for a given customer ID.
+     * @param customerId The ID of the customer.
+     * @return A list of Booking objects.
+     * @throws DAOException If a database access error occurs.
+     */
     public List<Booking> getBookingsByCustomerId(int customerId) {
         List<Booking> bookings = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -120,12 +146,16 @@ public class CustomerDAO {
                 }
             }
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException
             throw new DAOException("Failed to retrieve bookings for customer ID: " + customerId, e);
         }
         return bookings;
     }
 
+    /**
+     * Retrieves a list of all approved gym centers.
+     * @return A list of GymCentre objects.
+     * @throws DAOException If a database access error occurs.
+     */
     public List<GymCentre> getApprovedGyms() {
         List<GymCentre> approvedGyms = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -135,12 +165,17 @@ public class CustomerDAO {
                 approvedGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
-            // Wrap and re-throw SQLException
             throw new DAOException("Failed to retrieve approved gyms.", e);
         }
         return approvedGyms;
     }
 
+    /**
+     * Maps a ResultSet row to a Customer object.
+     * @param rs The ResultSet containing the customer data.
+     * @return A Customer object.
+     * @throws DAOException If a database access error occurs during mapping.
+     */
     private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
         try {
             return new Customer(
@@ -153,6 +188,12 @@ public class CustomerDAO {
         }
     }
 
+    /**
+     * Maps a ResultSet row to a GymCentre object.
+     * @param rs The ResultSet containing the gym center data.
+     * @return A GymCentre object.
+     * @throws DAOException If a database access error occurs during mapping.
+     */
     private GymCentre mapResultSetToGymCentre(ResultSet rs) throws SQLException {
         try {
             return new GymCentre(
@@ -172,6 +213,13 @@ public class CustomerDAO {
         }
     }
 
+    /**
+     * Maps a ResultSet row to a Booking object.
+     * @param rs The ResultSet containing the booking data.
+     * @return A Booking object.
+     * @throws DAOException If a database access error occurs during mapping.
+     * @throws MissingValueException If a required value like bookingDate or bookingTime is null.
+     */
     private Booking mapResultSetToBooking(ResultSet rs) throws SQLException {
         try {
             LocalDate bookingDate = null;
