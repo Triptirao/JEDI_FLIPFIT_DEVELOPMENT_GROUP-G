@@ -2,14 +2,20 @@ package com.flipfit.client;
 
 import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.GymOwner;
-import com.flipfit.bean.User;
 import com.flipfit.business.GymOwnerService;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
+import com.flipfit.exception.AccessDeniedException;
+import com.flipfit.exception.AuthenticationException;
+import com.flipfit.exception.DuplicateEntryException;
+import com.flipfit.exception.MismatchinputException;
+import com.flipfit.exception.UnableToDeleteUserException;
+import com.flipfit.exception.IndexOutOfBoundsException;
 
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.InputMismatchException;
 
 /**
  * Client class for the Gym Owner user role. This class handles the
@@ -33,7 +39,7 @@ public class GymOwnerClient {
      * @param gymOwnerDAO The DAO for gym owner data access.
      * @param loggedInOwnerId The user ID of the currently logged-in gym owner.
      */
-    public GymOwnerClient(UserDAO userDao, CustomerDAO customerDao,GymOwnerDAO gymOwnerDAO, int loggedInOwnerId) {
+    public GymOwnerClient(UserDAO userDao, CustomerDAO customerDao, GymOwnerDAO gymOwnerDAO, int loggedInOwnerId) {
         this.gymOwnerDao = gymOwnerDAO;
         this.userDao = userDao;
         this.loggedInOwnerId = loggedInOwnerId;
@@ -65,9 +71,9 @@ public class GymOwnerClient {
                 // Read the user's menu choice.
                 choice = in.nextInt();
                 in.nextLine(); // Consume the newline character.
-            } catch (Exception e) {
+            } catch (InputMismatchException e) {
                 System.out.println("Invalid input. Please enter a number.");
-                in.next(); // Clear the invalid input from the scanner.
+                in.nextLine(); // Clear the invalid input from the scanner.
                 continue;
             }
 
@@ -101,34 +107,41 @@ public class GymOwnerClient {
      * The method first checks if the owner's account is approved.
      */
     private void addCentre() {
-        // Retrieve the gym owner's data to check for approval status.
-        Optional<GymOwner> ownerData = gymOwnerDao.getGymOwnerById(loggedInOwnerId);
-        if (ownerData.isPresent()) {
-            GymOwner owner = ownerData.get();
-            // Check if the gym owner is approved to add a centre.
-            if (owner.isApproved()) {
-                System.out.print("Enter gym name: ");
-                String name = in.nextLine();
-                System.out.print("Enter gym capacity: ");
-                int capacity = in.nextInt();
-                in.nextLine();
-                System.out.print("Enter gym city: ");
-                String city = in.nextLine();
-                System.out.print("Enter gym state: ");
-                String state = in.nextLine();
-                System.out.print("Enter gym pin code: ");
-                String pincode = in.nextLine();
+        try {
+            // Retrieve the gym owner's data to check for approval status.
+            Optional<GymOwner> ownerData = gymOwnerDao.getGymOwnerById(loggedInOwnerId);
+            if (ownerData.isPresent()) {
+                GymOwner owner = ownerData.get();
+                // Check if the gym owner is approved to add a centre.
+                if (owner.isApproved()) {
+                    System.out.print("Enter gym name: ");
+                    String name = in.nextLine();
+                    System.out.print("Enter gym capacity: ");
+                    int capacity = in.nextInt();
+                    in.nextLine();
+                    System.out.print("Enter gym city: ");
+                    String city = in.nextLine();
+                    System.out.print("Enter gym state: ");
+                    String state = in.nextLine();
+                    System.out.print("Enter gym pin code: ");
+                    String pincode = in.nextLine();
 
-                // Create a new GymCentre object and call the service to add it.
-                // The centre is initially marked as not approved (false) by default.
-                GymCentre newGym = new GymCentre(owner.getUserId(), name, null, capacity, false, city, state, pincode, null);
-                gymOwnerService.addCentre(newGym);
-                System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
+                    // Create a new GymCentre object and call the service to add it.
+                    // The centre is initially marked as not approved (false) by default.
+                    GymCentre newGym = new GymCentre(owner.getUserId(), name, null, capacity, false, city, state, pincode, null);
+                    gymOwnerService.addCentre(newGym);
+                    System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
+                } else {
+                    throw new AccessDeniedException("You are not yet approved to add a gym centre. Please wait for an admin to approve your account.");
+                }
             } else {
-                System.out.println("You are not yet approved to add a gym centre. Please wait for an admin to approve your account.");
+                throw new AuthenticationException("Error: Gym Owner data not found.");
             }
-        } else {
-            System.out.println("Error: Gym Owner data not found.");
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input for capacity. Please enter a number.");
+            in.nextLine(); // Consume the invalid input.
+        } catch (AccessDeniedException | AuthenticationException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -138,7 +151,11 @@ public class GymOwnerClient {
      */
     private void viewGymDetails() {
         System.out.println("Viewing your gym details...");
-        gymOwnerService.viewGymDetails(loggedInOwnerId);
+        try {
+            gymOwnerService.viewGymDetails(loggedInOwnerId);
+        } catch (Exception e) {
+            System.out.println("An error occurred while viewing gym details: " + e.getMessage());
+        }
     }
 
     /**
@@ -146,7 +163,11 @@ public class GymOwnerClient {
      */
     private void viewCustomers() {
         System.out.println("Viewing customers...");
-        gymOwnerService.viewCustomers();
+        try {
+            gymOwnerService.viewCustomers();
+        } catch (Exception e) {
+            System.out.println("An error occurred while viewing customers: " + e.getMessage());
+        }
     }
 
     /**
@@ -154,7 +175,11 @@ public class GymOwnerClient {
      */
     private void viewPayments() {
         System.out.println("Viewing payment history...");
-        gymOwnerService.viewPayments();
+        try {
+            gymOwnerService.viewPayments();
+        } catch (Exception e) {
+            System.out.println("An error occurred while viewing payments: " + e.getMessage());
+        }
     }
 
     /**
@@ -175,8 +200,15 @@ public class GymOwnerClient {
             System.out.println("9. Change GST");
             System.out.println("10. Back to main menu");
             System.out.print("Enter your choice: ");
-            int editChoice = in.nextInt();
-            in.nextLine(); // Consume newline
+            int editChoice = 0;
+            try {
+                editChoice = in.nextInt();
+                in.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                in.nextLine();
+                continue;
+            }
 
             if (editChoice == 10) {
                 continueEditing = false;
@@ -186,8 +218,14 @@ public class GymOwnerClient {
             System.out.print("Enter new value: ");
             String newValue = in.nextLine();
 
-            // Call the service method to update the gym owner's details based on their choice.
-            gymOwnerService.editGymOwnerDetails(loggedInOwnerId, editChoice, newValue);
+            try {
+                // Call the service method to update the gym owner's details based on their choice.
+                gymOwnerService.editGymOwnerDetails(loggedInOwnerId, editChoice, newValue);
+            } catch (IndexOutOfBoundsException | MismatchinputException e) {
+                System.out.println("Error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+            }
         }
     }
 }

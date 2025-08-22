@@ -4,11 +4,18 @@ import com.flipfit.bean.Booking;
 import com.flipfit.bean.GymCentre;
 import com.flipfit.business.CustomerService;
 import com.flipfit.dao.*;
+import com.flipfit.exception.AccessDeniedException;
+import com.flipfit.exception.AuthenticationException;
+import com.flipfit.exception.DuplicateEntryException;
+import com.flipfit.exception.IndexOutOfBoundsException;
+import com.flipfit.exception.MismatchinputException;
 
-import java.util.List;
-import java.util.Scanner;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
 
 public class CustomerClient {
 
@@ -54,10 +61,10 @@ public class CustomerClient {
                 // Read the user's menu choice.
                 choice = in.nextInt();
                 in.nextLine(); // Consume newline left-over after nextInt().
-            } catch (Exception e) {
+            } catch (InputMismatchException e) {
                 System.out.println("Invalid input. Please enter a number.");
                 // Clear the invalid input from the scanner to prevent an infinite loop.
-                in.next();
+                in.nextLine();
                 continue;
             }
 
@@ -92,21 +99,29 @@ public class CustomerClient {
      * business service to perform the booking.
      */
     private void bookaSlot() {
-
         System.out.println("--- Book a Slot ---");
-        System.out.print("Enter Gym ID: ");
-        int gymId = in.nextInt();
-        System.out.print("Enter Slot ID: ");
-        int slotId = in.nextInt();
-        in.nextLine(); // Consume newline
-        System.out.print("Enter Booking Date (YYYY-MM-DD): ");
-        String dateStr = in.nextLine();
+        try {
+            System.out.print("Enter Gym ID: ");
+            int gymId = in.nextInt();
+            System.out.print("Enter Slot ID: ");
+            int slotId = in.nextInt();
+            in.nextLine(); // Consume newline
+            System.out.print("Enter Booking Date (YYYY-MM-DD): ");
+            String dateStr = in.nextLine();
 
-        // Parse the date from the user input.
-        LocalDate bookingDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            // Parse the date from the user input.
+            LocalDate bookingDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        // Use the existing service object to book the slot.
-        customerService.bookSlot(loggedInCustomerId, gymId, slotId, bookingDate);
+            // Use the existing service object to book the slot.
+            customerService.bookSlot(loggedInCustomerId, gymId, slotId, bookingDate);
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input. Please enter a number for ID.");
+            in.nextLine(); // Clear the invalid input
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid date format. Please use YYYY-MM-DD.");
+        } catch (DuplicateEntryException | AccessDeniedException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     /**
@@ -114,20 +129,23 @@ public class CustomerClient {
      */
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
+        try {
+            // Call the service layer to get the list of bookings for the customer.
+            List<Booking> bookings = customerService.viewBookedSlots(loggedInCustomerId);
 
-        // Call the service layer to get the list of bookings for the customer.
-        List<Booking> bookings = customerService.viewBookedSlots(loggedInCustomerId);
-
-        if (bookings.isEmpty()) {
-            System.out.println("No booked slots found.");
-        } else {
-            System.out.println("Booking Details:");
-            // Iterate and print the details of each booking.
-            for (Booking booking : bookings) {
-                System.out.println("Booking ID: " + booking.getBookingId() +
-                        ", Slot ID: " + booking.getSlotId() +
-                        ", Gym ID: " + booking.getGymId());
+            if (bookings.isEmpty()) {
+                System.out.println("No booked slots found.");
+            } else {
+                System.out.println("Booking Details:");
+                // Iterate and print the details of each booking.
+                for (Booking booking : bookings) {
+                    System.out.println("Booking ID: " + booking.getBookingId() +
+                            ", Slot ID: " + booking.getSlotId() +
+                            ", Gym ID: " + booking.getGymId());
+                }
             }
+        } catch (Exception e) {
+            System.out.println("An error occurred while viewing booked slots: " + e.getMessage());
         }
     }
 
@@ -135,18 +153,22 @@ public class CustomerClient {
      * Retrieves and displays a list of all available gym centers.
      */
     private void viewCenters() {
-        // Call the service layer to retrieve all gym centers.
-        List<GymCentre> centers = customerService.viewCenters();
-        if (centers.isEmpty()) {
-            System.out.println("No gym centers found.");
-        } else {
-            System.out.println("Gym Centers:");
-            // Iterate through the list of GymCentre objects and display their details.
-            for (GymCentre center : centers) {
-                System.out.println("ID: " + center.getCentreId() +
-                        ", Name: " + center.getCentreName() +
-                        ", City: " + center.getCity());
+        try {
+            // Call the service layer to retrieve all gym centers.
+            List<GymCentre> centers = customerService.viewCenters();
+            if (centers.isEmpty()) {
+                System.out.println("No gym centers found.");
+            } else {
+                System.out.println("Gym Centers:");
+                // Iterate through the list of GymCentre objects and display their details.
+                for (GymCentre center : centers) {
+                    System.out.println("ID: " + center.getCentreId() +
+                            ", Name: " + center.getCentreName() +
+                            ", City: " + center.getCity());
+                }
             }
+        } catch (Exception e) {
+            System.out.println("An error occurred while viewing centers: " + e.getMessage());
         }
     }
 
@@ -155,14 +177,21 @@ public class CustomerClient {
      */
     private void makePayments() {
         System.out.println("Initiating payment process...");
-        System.out.print("Enter payment type (1 for Credit Card, 2 for Debit Card, etc.): ");
-        int paymentType = in.nextInt();
-        in.nextLine(); // Consume newline
-        System.out.print("Enter account number: ");
-        String paymentInfo = in.nextLine();
+        try {
+            System.out.print("Enter payment type (1 for Credit Card, 2 for Debit Card, etc.): ");
+            int paymentType = in.nextInt();
+            in.nextLine(); // Consume newline
+            System.out.print("Enter account number: ");
+            String paymentInfo = in.nextLine();
 
-        // Pass the logged-in customer's ID and payment info to the service method.
-        customerService.makePayments(loggedInCustomerId, paymentType, paymentInfo);
+            // Pass the logged-in customer's ID and payment info to the service method.
+            customerService.makePayments(loggedInCustomerId, paymentType, paymentInfo);
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input for payment type. Please enter a number.");
+            in.nextLine();
+        } catch (Exception e) {
+            System.out.println("An error occurred during payment: " + e.getMessage());
+        }
     }
 
     /**
@@ -178,41 +207,54 @@ public class CustomerClient {
             System.out.println("4. Change Phone Number");
             System.out.println("5. Back to main menu");
             System.out.print("Enter your choice: ");
-            int editChoice = in.nextInt();
-            in.nextLine(); // Consume newline
+            int editChoice;
+            try {
+                editChoice = in.nextInt();
+                in.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                in.nextLine();
+                continue;
+            }
 
             String newValue;
-            switch (editChoice) {
-                case 1:
-                    System.out.print("Enter new name: ");
-                    newValue = in.nextLine();
-                    // Call the service method to update the customer's name.
-                    customerService.editCustomerDetails(loggedInCustomerId, 1, newValue);
-                    break;
-                case 2:
-                    System.out.print("Enter new email: ");
-                    newValue = in.nextLine();
-                    // Call the service method to update the customer's email.
-                    customerService.editCustomerDetails(loggedInCustomerId, 2, newValue);
-                    break;
-                case 3:
-                    System.out.print("Enter new password: ");
-                    newValue = in.nextLine();
-                    // Call the service method to update the customer's password.
-                    customerService.editCustomerDetails(loggedInCustomerId, 3, newValue);
-                    break;
-                case 4:
-                    System.out.print("Enter new phone number: ");
-                    newValue = in.nextLine();
-                    // Call the service method to update the customer's phone number.
-                    customerService.editCustomerDetails(loggedInCustomerId, 4, newValue);
-                    break;
-                case 5:
-                    // Exit the editing loop and return to the main customer menu.
-                    continueEditing = false;
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+            try {
+                switch (editChoice) {
+                    case 1:
+                        System.out.print("Enter new name: ");
+                        newValue = in.nextLine();
+                        // Call the service method to update the customer's name.
+                        customerService.editCustomerDetails(loggedInCustomerId, 1, newValue);
+                        break;
+                    case 2:
+                        System.out.print("Enter new email: ");
+                        newValue = in.nextLine();
+                        // Call the service method to update the customer's email.
+                        customerService.editCustomerDetails(loggedInCustomerId, 2, newValue);
+                        break;
+                    case 3:
+                        System.out.print("Enter new password: ");
+                        newValue = in.nextLine();
+                        // Call the service method to update the customer's password.
+                        customerService.editCustomerDetails(loggedInCustomerId, 3, newValue);
+                        break;
+                    case 4:
+                        System.out.print("Enter new phone number: ");
+                        newValue = in.nextLine();
+                        // Call the service method to update the customer's phone number.
+                        customerService.editCustomerDetails(loggedInCustomerId, 4, newValue);
+                        break;
+                    case 5:
+                        // Exit the editing loop and return to the main customer menu.
+                        continueEditing = false;
+                        break;
+                    default:
+                        throw new MismatchinputException("Invalid choice. Please try again.");
+                }
+            } catch (MismatchinputException e) {
+                System.out.println("Error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }
