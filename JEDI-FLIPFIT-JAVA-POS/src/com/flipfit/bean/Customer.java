@@ -1,13 +1,24 @@
 package com.flipfit.bean;
 
-public class Customer extends User {
+public class Customer {
+    private int userId;
     private int paymentType;
     private String paymentInfo;
 
-    public Customer(int id, String role, int userId, String fullName, String email, String password, long userPhone, String city, int pinCode, int paymentType, String paymentInfo) {
-        super(id, role, userId, fullName, email, password, userPhone, city, pinCode);
+    // Constructor for creating a new Customer record during registration
+    public Customer(int userId, int paymentType, String paymentInfo) {
+        this.userId = userId;
         this.paymentType = paymentType;
         this.paymentInfo = paymentInfo;
+    }
+
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public int getPaymentType() {

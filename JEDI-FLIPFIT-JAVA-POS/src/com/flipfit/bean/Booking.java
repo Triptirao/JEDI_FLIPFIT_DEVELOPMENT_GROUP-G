@@ -12,7 +12,13 @@ public class Booking {
     private LocalDate bookingDate;
     private LocalTime bookingTime;
 
-    public Booking() {
+    public Booking(int customerId, int centreId, int slotId, String booked, LocalDate now, LocalTime nowed) {
+        this.customerId = customerId;
+        this.gymId = centreId;
+        this.slotId = slotId;
+        this.bookingStatus = booked;
+        this.bookingDate = now;
+        this.bookingTime = nowed;
     }
 
     public Booking(int bookingId, int customerId, int gymId, int slotId, String bookingStatus, LocalDate bookingDate, LocalTime bookingTime) {

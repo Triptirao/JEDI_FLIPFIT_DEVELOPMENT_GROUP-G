@@ -1,15 +1,36 @@
 package com.flipfit.bean;
 
-public class GymOwner extends User {
+public class GymOwner {
+    private int userId;
     private String pan;
     private String aadhaar;
     private String gst;
+    private boolean isApproved; // Added to match a common database field for gym owners
 
-    public GymOwner(int id, String role, int userId, String fullName, String email, String password, long userPhone, String city, int pinCode, String pan, String aadhaar, String gst) {
-        super(id, role, userId, fullName, email, password, userPhone, city, pinCode);
+    // Constructor for creating a new GymOwner (used during registration)
+    public GymOwner(int userId, String pan, String aadhaar, String gst) {
+        this.userId = userId;
         this.pan = pan;
         this.aadhaar = aadhaar;
         this.gst = gst;
+        this.isApproved = false; // New owners are not approved by default
+    }
+
+    // Constructor for retrieving a GymOwner from the database
+    public GymOwner(int userId, String pan, String aadhaar, String gst, boolean isApproved) {
+        this.userId = userId;
+        this.pan = pan;
+        this.aadhaar = aadhaar;
+        this.gst = gst;
+        this.isApproved = isApproved;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public String getPan() {
@@ -34,5 +55,13 @@ public class GymOwner extends User {
 
     public void setGst(String gst) {
         this.gst = gst;
+    }
+
+    public boolean isApproved() {
+        return isApproved;
+    }
+
+    public void setApproved(boolean approved) {
+        isApproved = approved;
     }
 }
