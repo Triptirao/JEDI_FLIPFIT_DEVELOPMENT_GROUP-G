@@ -9,7 +9,9 @@ import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
+import com.flipfit.exception.*;
 
+import java.util.InputMismatchException;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -70,27 +72,31 @@ public class ApplicationClient {
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
-        Optional<User> user = Optional.ofNullable(authenticationService.login(email, password));
+        try {
+            Optional<User> user = Optional.ofNullable(authenticationService.login(email, password));
 
-        if (user.isPresent()) {
-            User userData = user.get();
-            System.out.println("Login successful! Welcome, " + userData.getFullName() + ".");
-            String role = userData.getRole();
+            if (user.isPresent()) {
+                User userData = user.get();
+                System.out.println("Login successful! Welcome, " + userData.getFullName() + ".");
+                String role = userData.getRole();
 
-            if (role.equalsIgnoreCase("CUSTOMER")) {
-                CustomerClient customerClient = new CustomerClient(customerDao, userDao, userData.getUserId());
-                customerClient.customerPage();
-            } else if (role.equalsIgnoreCase("OWNER")) {
-                GymOwnerClient gymOwnerClient = new GymOwnerClient(userDao, customerDao,gymOwnerDao, userData.getUserId());
-                gymOwnerClient.gymOwnerPage();
-            } else if (role.equalsIgnoreCase("ADMIN")) {
-                AdminClient adminClient = new AdminClient(adminDao, userDao,customerDao, gymOwnerDao);
-                adminClient.adminPage();
+                if (role.equalsIgnoreCase("CUSTOMER")) {
+                    CustomerClient customerClient = new CustomerClient(customerDao, userDao, userData.getUserId());
+                    customerClient.customerPage();
+                } else if (role.equalsIgnoreCase("OWNER")) {
+                    GymOwnerClient gymOwnerClient = new GymOwnerClient(userDao, customerDao,gymOwnerDao, userData.getUserId());
+                    gymOwnerClient.gymOwnerPage();
+                } else if (role.equalsIgnoreCase("ADMIN")) {
+                    AdminClient adminClient = new AdminClient(adminDao, userDao,customerDao, gymOwnerDao);
+                    adminClient.adminPage();
+                } else {
+                    System.out.println("Invalid Role for user.");
+                }
             } else {
-                System.out.println("Invalid Role for user.");
+                System.out.println("Login failed. Invalid credentials.");
             }
-        } else {
-            System.out.println("Login failed. Invalid credentials.");
+        } catch (AuthenticationException e) {
+            System.out.println("Login failed: " + e.getMessage());
         }
     }
 
@@ -110,19 +116,39 @@ public class ApplicationClient {
         System.out.print("Enter your city: ");
         String city = scanner.nextLine();
 
-        System.out.print("Enter your Pin Code: ");
-        int pinCode = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        int pinCode = 0;
+        try {
+            System.out.print("Enter your Pin Code: ");
+            pinCode = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid pin code format. Please enter a number.");
+            scanner.nextLine(); // Clear the invalid input
+            return;
+        }
 
-        System.out.print("Enter payment type (1 for Card, 2 for UPI): ");
-        int paymentType = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        int paymentType = 0;
+        try {
+            System.out.print("Enter payment type (1 for Card, 2 for UPI): ");
+            paymentType = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid payment type format. Please enter a number.");
+            scanner.nextLine(); // Clear the invalid input
+            return;
+        }
 
         System.out.print("Enter payment info (Card number or UPI ID): ");
         String paymentInfo = scanner.nextLine();
 
-        authenticationService.registerCustomer(fullName, email, password, phone, city, pinCode, paymentType, paymentInfo);
-        System.out.println("Registration Successful");
+        try {
+            authenticationService.registerCustomer(fullName, email, password, phone, city, pinCode, paymentType, paymentInfo);
+            System.out.println("Registration Successful");
+        } catch (DuplicateEntryException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        } catch (MismatchinputException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -138,7 +164,13 @@ public class ApplicationClient {
         String email = getValidEmailInput(); // Call validation for email
         String password = getPasswordInput(); // Reusing method for password input
 
-        long phone = Long.parseLong(getValidPhoneInput()); // Call validation for phone number
+        long phone;
+        try {
+            phone = Long.parseLong(getValidPhoneInput()); // Call validation for phone number
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid phone number format. Please enter exactly 10 digits.");
+            return;
+        }
 
         System.out.print("Enter your aadhaar number: ");
         String aadhaar = scanner.nextLine();
@@ -150,8 +182,14 @@ public class ApplicationClient {
         String gst = scanner.nextLine();
 
         System.out.println("Registration received for Owner: " + name);
-        authenticationService.registerGymOwner(name, email, password, phone,"NA",0, aadhaar, pan,gst);
-        System.out.println("Registration Successful (Pending Approval)");
+        try {
+            authenticationService.registerGymOwner(name, email, password, phone,"NA",0, aadhaar, pan,gst);
+            System.out.println("Registration Successful (Pending Approval)");
+        } catch (DuplicateEntryException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        } catch (MismatchinputException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        }
     }
 
     /**

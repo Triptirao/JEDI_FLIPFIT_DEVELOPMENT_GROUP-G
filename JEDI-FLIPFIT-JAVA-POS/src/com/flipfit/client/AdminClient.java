@@ -1,19 +1,20 @@
 package com.flipfit.client;
-
+import com.flipfit.exception.*;
 import com.flipfit.business.AdminService;
 import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
+import com.flipfit.exception.*;
 
-
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 /**
  * The AdminClient class provides a command-line interface for an administrator
  * to perform various administrative tasks. It interacts with the AdminService
  * to manage gyms, gym owners, and customers.
- * * @author
+ * @author
  */
 public class AdminClient {
 
@@ -22,13 +23,13 @@ public class AdminClient {
 
     /**
      * Constructs an AdminClient with necessary data access objects.
-     * * @param adminDao     DAO for admin-specific operations.
+     * @param adminDao     DAO for admin-specific operations.
      * @param userDao      DAO for user-related operations.
      * @param customerDao  DAO for customer-related operations.
      * @param gymOwnerDao  DAO for gym owner-related operations.
      */
     public AdminClient(AdminDAO adminDao, UserDAO userDao, CustomerDAO customerDao, GymOwnerDAO gymOwnerDao) {
-        this.adminService = new AdminService(adminDao, userDao,customerDao, gymOwnerDao);
+        this.adminService = new AdminService(adminDao, userDao, customerDao, gymOwnerDao);
         this.in = new Scanner(System.in);
     }
 
@@ -52,55 +53,92 @@ public class AdminClient {
             System.out.println("10. Exit");
             System.out.print("Enter your choice: ");
 
-            // Read the user's choice and handle potential InputMismatchException
-            int choice = in.nextInt();
-            in.nextLine(); // Consume the newline character left after nextInt()
+            try {
+                int choice = in.nextInt();
+                in.nextLine(); // Consume the newline character
 
-            switch (choice) {
-                case 1:
-                    adminService.viewAllGyms();
-                    break;
-                case 2:
-                    adminService.viewPendingGyms();
-                    break;
-                case 3:
-                    adminService.viewAllGymOwners();
-                    break;
-                case 4:
-                    adminService.viewPendingGymOwners();
-                    break;
-                case 5:
-                    adminService.viewAllCustomers();
-                    break;
-                case 6:
-                    System.out.print("Enter owner email to approve: ");
-                    String email = in.nextLine();
-                    adminService.approveGymOwnerRequest(email);
-                    break;
-                case 7:
-                    System.out.print("Enter gym ID to approve: ");
-                    String gymId = in.nextLine();
-                    // Parse the gym ID and handle potential NumberFormatException
-                    adminService.approveGymRequest(Integer.parseInt(gymId));
-                    break;
-                case 8:
-                    System.out.print("Enter user ID to delete: ");
-                    String userId = in.nextLine();
-                    // Parse the user ID and handle potential NumberFormatException
-                    adminService.deleteUserById(Integer.parseInt(userId));
-                    break;
-                case 9:
-                    System.out.print("Enter gym ID to delete: ");
-                    String gymIdToDelete = in.nextLine();
-                    // Parse the gym ID and handle potential NumberFormatException
-                    adminService.deleteGymById(Integer.parseInt(gymIdToDelete));
-                    break;
-                case 10:
-                    exitAdminMenu = true;
-                    System.out.println("Exiting Admin menu.");
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
+                switch (choice) {
+                    case 1:
+                        adminService.viewAllGyms();
+                        break;
+                    case 2:
+                        adminService.viewPendingGyms();
+                        break;
+                    case 3:
+                        adminService.viewAllGymOwners();
+                        break;
+                    case 4:
+                        adminService.viewPendingGymOwners();
+                        break;
+                    case 5:
+                        adminService.viewAllCustomers();
+                        break;
+                    case 6:
+                        System.out.print("Enter owner email to approve: ");
+                        String email = in.nextLine();
+                        try {
+                            adminService.approveGymOwnerRequest(email);
+                            System.out.println("Gym owner request approved successfully.");
+                        } catch (MismatchinputException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        } catch (AuthenticationException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        } catch (DuplicateEntryException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        }
+                        break;
+                    case 7:
+                        System.out.print("Enter gym ID to approve: ");
+                        try {
+                            int gymId = Integer.parseInt(in.nextLine());
+                            adminService.approveGymRequest(gymId);
+                            System.out.println("Gym centre approved successfully.");
+                        } catch (NumberFormatException e) {
+                            System.out.println("Error: Invalid gym ID format. Please enter a number.");
+                        } catch (MismatchinputException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        } catch (AuthenticationException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        } catch (DuplicateEntryException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        }
+                        break;
+                    case 8:
+                        System.out.print("Enter user ID to delete: ");
+                        try {
+                            int userId = Integer.parseInt(in.nextLine());
+                            adminService.deleteUserById(userId);
+                            System.out.println("User deleted successfully.");
+                        } catch (NumberFormatException e) {
+                            System.out.println("Error: Invalid user ID format. Please enter a number.");
+                        } catch (MismatchinputException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        } catch (UnableToDeleteUserException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        }
+                        break;
+                    case 9:
+                        System.out.print("Enter gym ID to delete: ");
+                        try {
+                            int gymIdToDelete = Integer.parseInt(in.nextLine());
+                            adminService.deleteGymById(gymIdToDelete);
+                            System.out.println("Gym deleted successfully.");
+                        } catch (NumberFormatException e) {
+                            System.out.println("Error: Invalid gym ID format. Please enter a number.");
+                        } catch (MismatchinputException e) {
+                            System.out.println("Error: " + e.getMessage());
+                        }
+                        break;
+                    case 10:
+                        exitAdminMenu = true;
+                        System.out.println("Exiting Admin menu.");
+                        break;
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Error: Invalid input. Please enter a number for your choice.");
+                in.nextLine(); // Clear the invalid input from the scanner
             }
         }
     }
