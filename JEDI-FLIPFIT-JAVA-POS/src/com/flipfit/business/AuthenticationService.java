@@ -6,6 +6,9 @@ import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.bean.User;
 import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymOwner;
+import com.flipfit.exception.AuthenticationException;
+import com.flipfit.exception.DuplicateEntryException;
+import com.flipfit.exception.MismatchinputException;
 
 import java.util.Optional;
 
@@ -32,10 +35,11 @@ public class AuthenticationService implements authenticationInterface {
      *
      * @param email The user's email address.
      * @param password The user's password.
-     * @return A User object if authentication is successful, otherwise null.
+     * @return A User object if authentication is successful.
+     * @throws AuthenticationException if the user's credentials are invalid.
      */
     @Override
-    public User login(String email, String password) {
+    public User login(String email, String password) throws AuthenticationException {
         // Authenticate user by checking against the database
         Optional<User> userOptional = userDao.getUserByEmailAndPassword(email, password);
 
@@ -53,7 +57,7 @@ public class AuthenticationService implements authenticationInterface {
             }
             return user;
         }
-        return null;
+        throw new AuthenticationException("Invalid email or password.");
     }
 
     /**
@@ -67,9 +71,17 @@ public class AuthenticationService implements authenticationInterface {
      * @param pinCode The customer's pincode.
      * @param paymentType The customer's payment type.
      * @param paymentInfo The customer's payment information.
+     * @throws DuplicateEntryException if a user with the same email already exists.
+     * @throws MismatchinputException if there is an issue with the provided input.
      */
     @Override
-    public void registerCustomer(String fullName, String email, String password, long userPhone, String city, int pinCode, int paymentType, String paymentInfo) {
+    public void registerCustomer(String fullName, String email, String password, long userPhone, String city, int pinCode, int paymentType, String paymentInfo) throws DuplicateEntryException, MismatchinputException {
+
+        // Basic input validation
+        if (fullName == null || fullName.trim().isEmpty() || password == null || password.trim().isEmpty() || email == null || email.trim().isEmpty()) {
+            throw new MismatchinputException("Full name, email, and password cannot be empty.");
+        }
+
         // Create a new User object and persist it to the User table
         User newUser = new User(fullName, email, password, userPhone, city, pinCode);
         int userId = userDao.addUser(newUser);
@@ -80,7 +92,7 @@ public class AuthenticationService implements authenticationInterface {
             customerDao.addCustomer(newCustomer);
             System.out.println("Customer registration received for " + fullName);
         } else {
-            System.out.println("User registration failed.");
+            throw new MismatchinputException("User registration failed due to an internal error.");
         }
     }
 
@@ -96,9 +108,18 @@ public class AuthenticationService implements authenticationInterface {
      * @param aadhaar The gym owner's Aadhaar number.
      * @param pan The gym owner's PAN number.
      * @param gst The gym owner's GST number.
+     * @throws DuplicateEntryException if a user with the same email already exists.
+     * @throws MismatchinputException if there is an issue with the provided input.
      */
     @Override
-    public void registerGymOwner(String fullName, String email, String password, long userPhone, String city, int pinCode, String aadhaar,String pan, String gst) {
+    public void registerGymOwner(String fullName, String email, String password, long userPhone, String city, int pinCode, String aadhaar, String pan, String gst) throws DuplicateEntryException, MismatchinputException {
+
+
+        // Basic input validation
+        if (fullName == null || fullName.trim().isEmpty() || password == null || password.trim().isEmpty() || email == null || email.trim().isEmpty()) {
+            throw new MismatchinputException("Full name, email, and password cannot be empty.");
+        }
+
         // Create a new User object and persist it to the User table
         User newUser = new User(fullName, email, password, userPhone, city, pinCode);
         int userId = userDao.addUser(newUser);
@@ -109,7 +130,7 @@ public class AuthenticationService implements authenticationInterface {
             gymOwnerDao.addGymOwner(newOwner);
             System.out.println("Gym owner registration received for " + fullName);
         } else {
-            System.out.println("User registration failed.");
+            throw new MismatchinputException("Gym owner registration failed due to an internal error.");
         }
     }
 }

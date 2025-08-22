@@ -7,6 +7,7 @@ import com.flipfit.dao.AdminDAO;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
+import com.flipfit.exception.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,9 +38,13 @@ public class AdminService implements adminInterface {
      * @param gymId The ID of the gym center to approve.
      */
     @Override
-    public void approveGymRequest(int gymId) {
-        adminDao.approveGymRequest(gymId);
-        System.out.println("Gym with ID " + gymId + " approved successfully.");
+    public void approveGymRequest(int gymId) throws MismatchinputException {
+        try {
+            adminDao.approveGymRequest(gymId);
+            System.out.println("Gym with ID " + gymId + " approved successfully.");
+        } catch (Exception e) {
+            throw new MismatchinputException("Failed to approve gym request with ID " + gymId + ". " + e.getMessage());
+        }
     }
 
     /**
@@ -47,9 +52,13 @@ public class AdminService implements adminInterface {
      * @param email The email of the gym owner to approve.
      */
     @Override
-    public void approveGymOwnerRequest(String email) {
-        adminDao.approveGymOwnerRequest(email);
-        System.out.println("Gym owner with email " + email + " approved successfully.");
+    public void approveGymOwnerRequest(String email) throws MismatchinputException {
+        try {
+            adminDao.approveGymOwnerRequest(email);
+            System.out.println("Gym owner with email " + email + " approved successfully.");
+        } catch (Exception e) {
+            throw new MismatchinputException("Failed to approve gym owner request with email " + email + ". " + e.getMessage());
+        }
     }
 
     /**
@@ -89,7 +98,6 @@ public class AdminService implements adminInterface {
         System.out.printf("%-30s %-20s %-15s%n", "Email", "Name", "Approved");
         System.out.println("--------------------------------------------------");
         for (User owner : pendingOwners) {
-            // Fetch the GymOwner details to check for approval status
             Optional<GymOwner> gymOwnerOptional = gymOwnerDao.getGymOwnerById(owner.getUserId());
             String approvedStatus = gymOwnerOptional.isPresent() && gymOwnerOptional.get().isApproved() ? "Yes" : "No";
             System.out.printf("%-30s %-20s %-15s%n", owner.getEmail(), owner.getFullName(), approvedStatus);
@@ -104,6 +112,10 @@ public class AdminService implements adminInterface {
     public void viewAllGyms() {
         System.out.println("Fetching all registered gym centers...");
         List<GymCentre> allGyms = adminDao.getAllGyms();
+        if (allGyms.isEmpty()) {
+            System.out.println("No registered gym centers found.");
+            return;
+        }
 
         System.out.println("Displaying all registered gym centers:");
         for (GymCentre gym : allGyms) {
@@ -125,6 +137,10 @@ public class AdminService implements adminInterface {
     public void viewAllGymOwners() {
         System.out.println("Fetching all registered gym owners...");
         List<User> allOwners = adminDao.getAllGymOwners();
+        if (allOwners.isEmpty()) {
+            System.out.println("No registered gym owners found.");
+            return;
+        }
 
         System.out.println("Displaying all registered gym owners:");
         for (User owner : allOwners) {
@@ -153,6 +169,10 @@ public class AdminService implements adminInterface {
     public void viewAllCustomers(){
         System.out.println("Fetching all registered customers...");
         List<User> allCustomers = adminDao.getAllCustomers();
+        if (allCustomers.isEmpty()) {
+            System.out.println("No registered customers found.");
+            return;
+        }
 
         System.out.println("Displaying all registered customers:");
         for (User customer : allCustomers) {
@@ -172,9 +192,13 @@ public class AdminService implements adminInterface {
      * @param userId The ID of the user to delete.
      */
     @Override
-    public void deleteUserById(int userId) {
-        adminDao.deleteUser(userId);
-        System.out.println("User with ID: " + userId + " deleted successfully.");
+    public void deleteUserById(int userId) throws UnableToDeleteUserException {
+        try {
+            adminDao.deleteUser(userId);
+            System.out.println("User with ID: " + userId + " deleted successfully.");
+        } catch (Exception e) {
+            throw new UnableToDeleteUserException("Failed to delete user with ID " + userId + ". " + e.getMessage());
+        }
     }
 
     /**
@@ -182,8 +206,12 @@ public class AdminService implements adminInterface {
      * @param gymId The ID of the gym to delete.
      */
     @Override
-    public void deleteGymById(int gymId) {
-        adminDao.deleteGym(gymId);
-        System.out.println("Gym with ID: " + gymId + " deleted successfully.");
+    public void deleteGymById(int gymId) throws MismatchinputException {
+        try {
+            adminDao.deleteGym(gymId);
+            System.out.println("Gym with ID: " + gymId + " deleted successfully.");
+        } catch (Exception e) {
+            throw new MismatchinputException("Failed to delete gym with ID " + gymId + ". " + e.getMessage());
+        }
     }
 }
