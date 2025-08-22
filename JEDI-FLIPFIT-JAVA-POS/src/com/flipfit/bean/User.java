@@ -1,6 +1,6 @@
 package com.flipfit.bean;
 
-public class User extends Role {
+public class User {
     private int userId;
     private String fullName;
     private String email;
@@ -8,9 +8,20 @@ public class User extends Role {
     private long userPhone;
     private String city;
     private int pinCode;
+    private String role; // Field to hold the role after it's determined from the database
 
-    public User(int id, String role, int userId, String fullName, String email, String password, long userPhone, String city, int pinCode) {
-        super(id, role);
+    // Constructor for creating a new User object (before insertion into the database)
+    public User(String fullName, String email, String password, long userPhone, String city, int pinCode) {
+        this.fullName = fullName;
+        this.email = email;
+        this.password = password;
+        this.userPhone = userPhone;
+        this.city = city;
+        this.pinCode = pinCode;
+    }
+
+    // Constructor for creating a User object from a database record
+    public User(int userId, String fullName, String email, String password, long userPhone, String city, int pinCode) {
         this.userId = userId;
         this.fullName = fullName;
         this.email = email;
@@ -28,11 +39,11 @@ public class User extends Role {
         this.userId = userId;
     }
 
-    public String getName() {
+    public String getFullName() {
         return fullName;
     }
 
-    public void setName(String fullName) {
+    public void setFullName(String fullName) {
         this.fullName = fullName;
     }
 
@@ -74,5 +85,13 @@ public class User extends Role {
 
     public void setPinCode(int pinCode) {
         this.pinCode = pinCode;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
