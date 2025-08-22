@@ -8,7 +8,7 @@ import com.flipfit.dao.*;
 import com.flipfit.exception.DuplicateEntryException;
 import com.flipfit.exception.MismatchinputException;
 import com.flipfit.exception.MissingValueException;
-import java.sql.SQLException; // This is a necessary import as DAO methods are assumed to throw it.
+import java.sql.SQLException;
 import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalTime;

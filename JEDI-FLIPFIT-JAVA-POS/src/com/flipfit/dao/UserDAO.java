@@ -14,6 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The UserDAO class provides data access operations for the User entity.
+ * It handles all database interactions related to user management, including
+ * adding, retrieving, updating, and deleting user records.
+ */
 public class UserDAO {
 
     private static final String SELECT_ALL_CUSTOMERS = "SELECT u.* FROM User u JOIN Customer c ON u.userId = c.customerId";
@@ -25,7 +30,14 @@ public class UserDAO {
     private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
     private static final String SELECT_ALL_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = TRUE";
 
-
+    /**
+     * Adds a new user record to the database.
+     *
+     * @param user The User object containing the data to be added.
+     * @return The auto-generated user ID if the insertion is successful, otherwise -1.
+     * @throws DuplicateEntryException if a user with the same unique email already exists.
+     * @throws DAOException if a general database access error occurs.
+     */
     public int addUser(User user) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
@@ -52,6 +64,12 @@ public class UserDAO {
         return -1;
     }
 
+    /**
+     * Retrieves a list of all users who are customers.
+     *
+     * @return A list of User objects representing all customers.
+     * @throws DAOException if a database access error occurs.
+     */
     public List<User> getAllCustomers() {
         List<User> customers = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -66,7 +84,12 @@ public class UserDAO {
         return customers;
     }
 
-
+    /**
+     * Retrieves a list of all users from the database.
+     *
+     * @return A list of all User objects.
+     * @throws DAOException if a database access error occurs.
+     */
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -81,6 +104,13 @@ public class UserDAO {
         return userList;
     }
 
+    /**
+     * Retrieves a user from the database by their unique ID.
+     *
+     * @param userId The ID of the user to retrieve.
+     * @return An Optional containing the User object if found, otherwise an empty Optional.
+     * @throws DAOException if a database access error occurs.
+     */
     public Optional<User> getUserById(int userId) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SELECT_USER_BY_ID)) {
@@ -96,6 +126,14 @@ public class UserDAO {
         return Optional.empty();
     }
 
+    /**
+     * Authenticates a user by checking their email and password against the database.
+     *
+     * @param email The user's email address.
+     * @param password The user's password.
+     * @return An Optional containing the User object if authentication is successful, otherwise an empty Optional.
+     * @throws DAOException if a database access error occurs.
+     */
     public Optional<User> getUserByEmailAndPassword(String email, String password) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SELECT_USER_BY_EMAIL_PASSWORD)) {
@@ -112,6 +150,12 @@ public class UserDAO {
         return Optional.empty();
     }
 
+    /**
+     * Deletes a user record from the database.
+     *
+     * @param userId The ID of the user to delete.
+     * @throws DAOException if the user is not found or a database access error occurs.
+     */
     public void deleteUser(int userId) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
@@ -125,6 +169,13 @@ public class UserDAO {
         }
     }
 
+    /**
+     * Updates an existing user record in the database.
+     *
+     * @param user The User object with the updated details.
+     * @throws DuplicateEntryException if the updated email already exists for another user.
+     * @throws DAOException if the user is not found or a general database access error occurs.
+     */
     public void updateUser(User user) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(UPDATE_USER)) {
@@ -147,6 +198,12 @@ public class UserDAO {
         }
     }
 
+    /**
+     * Retrieves a list of all users who are approved gym owners.
+     *
+     * @return A list of User objects representing all approved gym owners.
+     * @throws DAOException if a database access error occurs.
+     */
     public List<User> getAllGymOwners() {
         List<User> gymOwners = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -161,6 +218,15 @@ public class UserDAO {
         return gymOwners;
     }
 
+    /**
+     * Maps a row from a ResultSet to a User object.
+     *
+     * @param rs The ResultSet containing user data.
+     * @return A new User object populated with data from the ResultSet.
+     * @throws SQLException if an error occurs while accessing the result set.
+     * @throws MissingValueException if a required value (e.g., fullName, email) is missing from the database record.
+     * @throws DAOException if a general error occurs during the mapping process.
+     */
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         try {
             // Check for potential null values before returning the User object
