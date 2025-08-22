@@ -106,6 +106,7 @@ public class GymOwnerClient {
      * Prompts the gym owner for details to add a new gym centre.
      * The method first checks if the owner's account is approved.
      */
+    //TODO:
     private void addCentre() {
         try {
             // Retrieve the gym owner's data to check for approval status.
@@ -149,6 +150,7 @@ public class GymOwnerClient {
      * Calls the service layer to display the gym details associated with the
      * logged-in gym owner.
      */
+    //TODO
     private void viewGymDetails() {
         System.out.println("Viewing your gym details...");
         try {
@@ -161,6 +163,7 @@ public class GymOwnerClient {
     /**
      * Calls the service layer to display the list of customers.
      */
+    //TODO change to view booking
     private void viewCustomers() {
         System.out.println("Viewing customers...");
         try {
@@ -173,6 +176,7 @@ public class GymOwnerClient {
     /**
      * Calls the service layer to display the payment history.
      */
+    // Not required
     private void viewPayments() {
         System.out.println("Viewing payment history...");
         try {
@@ -185,6 +189,7 @@ public class GymOwnerClient {
     /**
      * Provides a sub-menu for the gym owner to edit their personal details.
      */
+    //TODO : check if working fine
     private void editDetails() {
         boolean continueEditing = true;
         while (continueEditing) {

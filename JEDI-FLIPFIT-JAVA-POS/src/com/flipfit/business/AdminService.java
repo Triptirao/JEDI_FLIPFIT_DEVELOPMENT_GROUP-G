@@ -205,6 +205,7 @@ public class AdminService implements adminInterface {
      * Deletes a gym from the system by its ID.
      * @param gymId The ID of the gym to delete.
      */
+    //TODO: delete slots from slot table
     @Override
     public void deleteGymById(int gymId) throws MismatchinputException {
         try {
