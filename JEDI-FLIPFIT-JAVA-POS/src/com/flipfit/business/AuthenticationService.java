@@ -15,7 +15,7 @@ import java.util.Optional;
  *
  * @author
  */
-public class AuthenticationService implements AuthenticationInterface {
+public class AuthenticationService implements authenticationInterface {
 
     private final UserDAO userDao;
     private final CustomerDAO customerDao;
