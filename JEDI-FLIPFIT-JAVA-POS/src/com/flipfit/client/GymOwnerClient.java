@@ -11,6 +11,12 @@ import com.flipfit.dao.UserDAO;
 import java.util.Optional;
 import java.util.Scanner;
 
+/**
+ * Client class for the Gym Owner user role. This class handles the
+ * user interface and interactions for gym owners, providing a menu-driven
+ * system to perform actions such as adding gym centers, viewing details,
+ * and editing their profile.
+ */
 public class GymOwnerClient {
 
     private final GymOwnerService gymOwnerService;
@@ -19,14 +25,27 @@ public class GymOwnerClient {
     private final GymOwnerDAO gymOwnerDao;
     private final int loggedInOwnerId;
 
+    /**
+     * Constructs a GymOwnerClient object.
+     *
+     * @param userDao The DAO for user data access.
+     * @param customerDao The DAO for customer data access.
+     * @param gymOwnerDAO The DAO for gym owner data access.
+     * @param loggedInOwnerId The user ID of the currently logged-in gym owner.
+     */
     public GymOwnerClient(UserDAO userDao, CustomerDAO customerDao,GymOwnerDAO gymOwnerDAO, int loggedInOwnerId) {
         this.gymOwnerDao = gymOwnerDAO;
         this.userDao = userDao;
         this.loggedInOwnerId = loggedInOwnerId;
+        // Initialize the service layer with the required DAOs.
         this.gymOwnerService = new GymOwnerService(userDao, customerDao, gymOwnerDAO);
         this.in = new Scanner(System.in);
     }
 
+    /**
+     * Displays the main menu for the gym owner and handles their choices
+     * for various operations.
+     */
     public void gymOwnerPage() {
         boolean exitOwnerMenu = false;
         while (!exitOwnerMenu) {
@@ -43,11 +62,12 @@ public class GymOwnerClient {
 
             int choice;
             try {
+                // Read the user's menu choice.
                 choice = in.nextInt();
-                in.nextLine();
+                in.nextLine(); // Consume the newline character.
             } catch (Exception e) {
                 System.out.println("Invalid input. Please enter a number.");
-                in.next();
+                in.next(); // Clear the invalid input from the scanner.
                 continue;
             }
 
@@ -69,17 +89,23 @@ public class GymOwnerClient {
                     break;
                 case 6:
                     System.out.println("Exiting Gym Owner Menu...");
-                    return;
+                    return; // Exit the method and the loop.
                 default:
                     System.out.println("Invalid number. Please try again.");
             }
         }
     }
 
+    /**
+     * Prompts the gym owner for details to add a new gym centre.
+     * The method first checks if the owner's account is approved.
+     */
     private void addCentre() {
+        // Retrieve the gym owner's data to check for approval status.
         Optional<GymOwner> ownerData = gymOwnerDao.getGymOwnerById(loggedInOwnerId);
         if (ownerData.isPresent()) {
             GymOwner owner = ownerData.get();
+            // Check if the gym owner is approved to add a centre.
             if (owner.isApproved()) {
                 System.out.print("Enter gym name: ");
                 String name = in.nextLine();
@@ -93,6 +119,8 @@ public class GymOwnerClient {
                 System.out.print("Enter gym pin code: ");
                 String pincode = in.nextLine();
 
+                // Create a new GymCentre object and call the service to add it.
+                // The centre is initially marked as not approved (false) by default.
                 GymCentre newGym = new GymCentre(owner.getUserId(), name, null, capacity, false, city, state, pincode, null);
                 gymOwnerService.addCentre(newGym);
                 System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
@@ -104,21 +132,34 @@ public class GymOwnerClient {
         }
     }
 
+    /**
+     * Calls the service layer to display the gym details associated with the
+     * logged-in gym owner.
+     */
     private void viewGymDetails() {
         System.out.println("Viewing your gym details...");
         gymOwnerService.viewGymDetails(loggedInOwnerId);
     }
 
+    /**
+     * Calls the service layer to display the list of customers.
+     */
     private void viewCustomers() {
         System.out.println("Viewing customers...");
         gymOwnerService.viewCustomers();
     }
 
+    /**
+     * Calls the service layer to display the payment history.
+     */
     private void viewPayments() {
         System.out.println("Viewing payment history...");
         gymOwnerService.viewPayments();
     }
 
+    /**
+     * Provides a sub-menu for the gym owner to edit their personal details.
+     */
     private void editDetails() {
         boolean continueEditing = true;
         while (continueEditing) {
@@ -145,6 +186,7 @@ public class GymOwnerClient {
             System.out.print("Enter new value: ");
             String newValue = in.nextLine();
 
+            // Call the service method to update the gym owner's details based on their choice.
             gymOwnerService.editGymOwnerDetails(loggedInOwnerId, editChoice, newValue);
         }
     }
