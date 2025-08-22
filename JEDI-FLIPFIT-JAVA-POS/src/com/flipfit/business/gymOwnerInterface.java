@@ -44,10 +44,4 @@ public interface gymOwnerInterface {
      * @param newValue The new value for the selected detail.
      */
     void editGymOwnerDetails(int ownerId, int choice, String newValue);
-
-    /**
-     * Displays the main menu for a logged-in gym owner and handles user input.
-     * @param loggedInOwnerId The ID of the currently logged-in gym owner.
-     */
-    void displayGymOwnerMenu(int loggedInOwnerId);
 }

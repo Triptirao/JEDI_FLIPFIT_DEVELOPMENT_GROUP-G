@@ -2,18 +2,16 @@ package com.flipfit.dao;
 
 import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.GymOwner;
+import com.flipfit.bean.Slot;
 import com.flipfit.bean.User;
 import com.flipfit.exception.DAOException;
+import com.flipfit.exception.DuplicateEntryException;
 import com.flipfit.exception.MissingValueException;
 import com.flipfit.utils.DBConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.*;
+import java.time.LocalTime;
+import java.util.*;
 
 /**
  * The {@code GymOwnerDAO} class provides **Data Access Object (DAO)**
@@ -44,10 +42,11 @@ public class GymOwnerDAO {
     private static final String DELETE_GYM = "DELETE FROM GymCentre WHERE centreId = ?";
     private static final String SELECT_ALL_APPROVED_GYMS = "SELECT * FROM GymCentre WHERE approved = TRUE";
     private static final String SELECT_ALL_GYMS = "SELECT * FROM GymCentre";
-    private static final String INSERT_GYM_CENTRE = "INSERT INTO GymCentre (ownerId, name, capacity, approved, city, state, pincode) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String INSERT_GYM_CENTRE = "INSERT INTO GymCentre (ownerId, name, capacity, cost, approved, city, state, pincode, facilities) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String SELECT_GYMS_BY_OWNER_ID = "SELECT * FROM GymCentre WHERE ownerId = ?";
     private static final String UPDATE_GYM_OWNER_DETAILS = "UPDATE GymOwner SET pan = ?, aadhaar = ?, gst = ? WHERE ownerId = ?";
     private static final String SELECT_PENDING_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = FALSE";
+    private static final String INSERT_SLOT_DETAILS = "INSERT INTO Slot (gymId, startTime, endTime, capacity, bookedCount) VALUES (?, ?, ?, ?, ?)";
 
     /**
      * Retrieves a {@code GymOwner} by their user ID.
@@ -85,19 +84,65 @@ public class GymOwnerDAO {
      * @param gym The {@code GymCentre} object to be added.
      * @throws DAOException if a database access error occurs.
      */
-    public void addGym(GymCentre gym) {
+    public int addGym(GymCentre gym) {
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(INSERT_GYM_CENTRE)) {
+             PreparedStatement ps = con.prepareStatement(INSERT_GYM_CENTRE, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, gym.getOwnerId());
             ps.setString(2, gym.getCentreName());
             ps.setInt(3, gym.getCapacity());
-            ps.setBoolean(4, gym.isApproved());
-            ps.setString(5, gym.getCity());
-            ps.setString(6, gym.getState());
-            ps.setString(7, gym.getPincode());
+            ps.setInt(4, gym.getCost());
+            ps.setBoolean(5, gym.isApproved());
+            ps.setString(6, gym.getCity());
+            ps.setString(7, gym.getState());
+            ps.setString(8, gym.getPincode());
+            ps.setString(9, gym.getFacilities());
             ps.executeUpdate();
+
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
         } catch (SQLException e) {
             throw new DAOException("Failed to add gym center.", e);
+        }
+        return -1;
+    }
+
+    /**
+     * Adds new slots corresponding to gym
+     *
+     * @param slot The {@code Slot} object to be added.
+     * @throws DAOException if a database access error occurs.
+     */
+    public void addSlots(Slot slot) {
+        List<Map.Entry<LocalTime, LocalTime>> slots = List.of(
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(6, 0), LocalTime.of(7, 0)),
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(7, 0), LocalTime.of(8, 0)),
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(8, 0), LocalTime.of(9, 0)),
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(19, 0), LocalTime.of(20, 0)),
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(20, 0), LocalTime.of(21, 0)),
+                new AbstractMap.SimpleImmutableEntry<>(LocalTime.of(21, 0), LocalTime.of(22, 0))
+        );
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(INSERT_SLOT_DETAILS)) {
+
+            // Loop through each slot and insert it into the database
+            for (Map.Entry<LocalTime, LocalTime> newSlot : slots) {
+                ps.setInt(1, slot.getGymId());
+                ps.setTime(2, Time.valueOf(newSlot.getKey()));
+                ps.setTime(3, Time.valueOf(newSlot.getValue()));
+                ps.setInt(4, slot.getCapacity());
+                ps.setInt(5, 0); // The booked count is always 0 for a new slot
+
+                ps.addBatch();
+            }
+
+            ps.executeBatch();
+
+        } catch (SQLException e) {
+            throw new DAOException("Failed to add gym slots.", e);
         }
     }
 
@@ -322,6 +367,7 @@ public class GymOwnerDAO {
                     rs.getString("name"),
                     rs.getString("slots"),
                     rs.getInt("capacity"),
+                    rs.getInt("cost"),
                     rs.getBoolean("approved"),
                     rs.getString("city"),
                     rs.getString("state"),

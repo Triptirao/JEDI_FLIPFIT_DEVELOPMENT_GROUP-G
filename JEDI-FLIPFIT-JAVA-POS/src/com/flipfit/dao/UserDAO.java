@@ -27,7 +27,7 @@ public class UserDAO {
     private static final String SELECT_USER_BY_ID = "SELECT * FROM `User` WHERE userId = ?";
     private static final String SELECT_USER_BY_EMAIL_PASSWORD = "SELECT * FROM `User` WHERE email = ? AND password = ?";
     private static final String DELETE_USER = "DELETE FROM `User` WHERE userId = ?";
-    private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
+    private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, password = ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
     private static final String SELECT_ALL_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = TRUE";
 
     /**

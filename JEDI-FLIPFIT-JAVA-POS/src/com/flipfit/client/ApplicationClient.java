@@ -127,22 +127,19 @@ public class ApplicationClient {
             return;
         }
 
-        int paymentType = 0;
-        try {
+        System.out.print("Enter payment type (1 for Card, 2 for UPI): ");
+        String paymentType = scanner.nextLine();
+        while(!paymentType.equals("1") && !paymentType.equals("2")) {
+            System.out.println("Invalid payment type. Please enter valid option");
             System.out.print("Enter payment type (1 for Card, 2 for UPI): ");
-            paymentType = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
-        } catch (InputMismatchException e) {
-            System.out.println("Invalid payment type format. Please enter a number.");
-            scanner.nextLine(); // Clear the invalid input
-            return;
+            paymentType = scanner.nextLine();
         }
 
         System.out.print("Enter payment info (Card number or UPI ID): ");
         String paymentInfo = scanner.nextLine();
 
         try {
-            authenticationService.registerCustomer(fullName, email, password, phone, city, pinCode, paymentType, paymentInfo);
+            authenticationService.registerCustomer(fullName, email, password, phone, city, pinCode, Integer.parseInt(paymentType), paymentInfo);
             System.out.println("Registration Successful");
         } catch (DuplicateEntryException e) {
             System.out.println("Registration failed: " + e.getMessage());
@@ -163,12 +160,19 @@ public class ApplicationClient {
 
         String email = getValidEmailInput(); // Call validation for email
         String password = getPasswordInput(); // Reusing method for password input
+        long phone = Long.parseLong(getValidPhoneInput()); // Call validation for phone number
 
-        long phone;
+        System.out.print("Enter your city: ");
+        String city = scanner.nextLine();
+
+        int pinCode = 0;
         try {
-            phone = Long.parseLong(getValidPhoneInput()); // Call validation for phone number
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid phone number format. Please enter exactly 10 digits.");
+            System.out.print("Enter your Pin Code: ");
+            pinCode = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid pin code format. Please enter a number.");
+            scanner.nextLine(); // Clear the invalid input
             return;
         }
 
@@ -183,7 +187,7 @@ public class ApplicationClient {
 
         System.out.println("Registration received for Owner: " + name);
         try {
-            authenticationService.registerGymOwner(name, email, password, phone,"NA",0, aadhaar, pan,gst);
+            authenticationService.registerGymOwner(name, email, password, phone,city,pinCode, aadhaar, pan,gst);
             System.out.println("Registration Successful (Pending Approval)");
         } catch (DuplicateEntryException e) {
             System.out.println("Registration failed: " + e.getMessage());

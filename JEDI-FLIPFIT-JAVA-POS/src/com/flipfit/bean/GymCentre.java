@@ -35,6 +35,11 @@ public class GymCentre {
     private int capacity;
 
     /**
+     * The cost of booking one slot of the gym.
+     */
+    private int cost;
+
+    /**
      * The approval status of the gym center.
      * 'true' if the admin has approved the center, 'false' otherwise.
      */
@@ -69,18 +74,20 @@ public class GymCentre {
      * @param centreName The name of the gym.
      * @param slots      The slots available at the gym.
      * @param capacity   The capacity of the gym.
+     * @param cost       The cost of a slot.
      * @param approved   The approval status.
      * @param city       The city of the gym.
      * @param state      The state of the gym.
      * @param pincode    The pincode of the gym's location.
      * @param facilities The list of facilities.
      */
-    public GymCentre(int centreId, int ownerId, String centreName, String slots, int capacity, boolean approved, String city, String state, String pincode, String facilities) {
+    public GymCentre(int centreId, int ownerId, String centreName, String slots, int capacity, int cost, boolean approved, String city, String state, String pincode, String facilities) {
         this.centreId = centreId;
         this.ownerId = ownerId;
         this.centreName = centreName;
         this.slots = slots;
         this.capacity = capacity;
+        this.cost = cost;
         this.approved = approved;
         this.city = city;
         this.state = state;
@@ -96,17 +103,19 @@ public class GymCentre {
      * @param centreName The name of the gym.
      * @param slots      The slots available at the gym.
      * @param capacity   The capacity of the gym.
+     * @param cost       The cost of a slot.
      * @param approved   The approval status.
      * @param city       The city of the gym.
      * @param state      The state of the gym.
      * @param pincode    The pincode of the gym's location.
      * @param facilities The list of facilities.
      */
-    public GymCentre(int ownerId, String centreName, String slots, int capacity, boolean approved, String city, String state, String pincode, String facilities) {
+    public GymCentre(int ownerId, String centreName, String slots, int capacity, int cost, boolean approved, String city, String state, String pincode, String facilities) {
         this.ownerId = ownerId;
         this.centreName = centreName;
         this.slots = slots;
         this.capacity = capacity;
+        this.cost = cost;
         this.approved = approved;
         this.city = city;
         this.state = state;
@@ -205,6 +214,20 @@ public class GymCentre {
     public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
+
+    /**
+     * Retrieves the cost of one slot.
+     *
+     * @return The cost.
+     */
+    public int getCost() {return  cost;}
+
+    /**
+     * Sets the cost of one slot.
+     *
+     * @param cost The new cost.
+     */
+    public void setCost(int cost) {this.cost = cost;}
 
     /**
      * Checks if the gym center has been approved by an admin.

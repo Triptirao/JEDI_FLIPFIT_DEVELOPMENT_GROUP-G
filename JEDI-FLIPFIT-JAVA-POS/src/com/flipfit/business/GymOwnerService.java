@@ -1,11 +1,10 @@
 package com.flipfit.business;
 
+import com.flipfit.bean.*;
 import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
-import com.flipfit.bean.GymCentre;
-import com.flipfit.bean.User;
-import com.flipfit.bean.GymOwner;
+import com.flipfit.exception.MismatchinputException;
 
 import java.sql.SQLException;
 import java.util.InputMismatchException;
@@ -39,8 +38,16 @@ public class GymOwnerService implements gymOwnerInterface {
      */
     @Override
     public void addCentre(GymCentre gymData) {
-        gymOwnerDao.addGym(gymData);
+        int gymId = gymOwnerDao.addGym(gymData);
         System.out.println("Adding new gym centre: " + gymData.getCentreName());
+
+        if (gymId != -1) {
+            // Create slots and link it to the gym
+            Slot newSlot = new Slot(gymId, gymData.getCapacity());
+            gymOwnerDao.addSlots(newSlot);
+        } else {
+            throw new MismatchinputException("Gym registration failed due to an internal error.");
+        }
     }
 
     /**
@@ -54,13 +61,13 @@ public class GymOwnerService implements gymOwnerInterface {
         gyms = gymOwnerDao.getGymsByOwnerId(ownerId);
 
         System.out.println("------------------------------------------------------------------");
-        System.out.printf("%-15s %-20s %-20s %n", "Gym ID", "Name", "Location");
+        System.out.printf("%-15s %-20s %-20s %-20s %n", "Gym ID", "Name", "Location", "Approval Status");
         System.out.println("------------------------------------------------------------------");
         if (gyms.isEmpty()) {
             System.out.println("No gym centers found.");
         } else {
             for (GymCentre gym : gyms) {
-                System.out.printf("%-15s %-20s %-20s %n", gym.getCentreId(), gym.getCentreName(), gym.getCity() + ", " + gym.getState());
+                System.out.printf("%-15s %-20s %-20s %-20s %n", gym.getCentreId(), gym.getCentreName(), gym.getCity() + ", " + gym.getState(), gym.isApproved()? "Approved" : "Pending");
             }
         }
         System.out.println("------------------------------------------------------------------");
@@ -143,119 +150,5 @@ public class GymOwnerService implements gymOwnerInterface {
         userDao.updateUser(user);
         gymOwnerDao.updateGymOwnerDetails(gymOwner);
         System.out.println("Owner details updated successfully.");
-    }
-
-    /**
-     * Displays the main menu for a logged-in gym owner and handles user input.
-     * @param loggedInOwnerId The ID of the currently logged-in gym owner.
-     */
-    @Override
-    public void displayGymOwnerMenu(int loggedInOwnerId) {
-        boolean exitOwnerMenu = false;
-        while (!exitOwnerMenu) {
-            System.out.println("\n*** Welcome, Gym Owner! ***");
-            System.out.println("1. Add a new Gym Centre");
-            System.out.println("2. View My Gym Details");
-            System.out.println("3. View My Customer List");
-            System.out.println("4. View Payments");
-            System.out.println("5. Edit My Details");
-            System.out.println("6. Exit");
-            System.out.print("Enter your choice: ");
-
-            int choice = -1;
-            try {
-                choice = in.nextInt();
-                in.nextLine(); // Consume newline
-            } catch (InputMismatchException e) {
-                System.err.println("Invalid input. Please enter a number from 1 to 6.");
-                in.nextLine(); // Clear the invalid input from the scanner
-                continue; // Restart the loop
-            }
-
-            switch (choice) {
-                case 1:
-                    boolean continueAdding = true;
-                    while (continueAdding) {
-                        try {
-                            System.out.println("\n--- Add a New Gym Centre ---");
-                            System.out.print("Enter gym name: ");
-                            String name = in.nextLine();
-                            System.out.print("Enter gym capacity: ");
-                            int capacity = in.nextInt();
-                            in.nextLine();
-                            System.out.print("Enter gym city: ");
-                            String city = in.nextLine();
-                            System.out.print("Enter gym state: ");
-                            String state = in.nextLine();
-                            System.out.print("Enter gym pincode: ");
-                            String pincode = in.nextLine();
-
-                            GymCentre newGym = new GymCentre(0, loggedInOwnerId, name, null, capacity, false, city, state, pincode, null);
-                            addCentre(newGym);
-
-                            System.out.println("Gym Centre with name " + name + " and location " + city + ", " + state + " added. Do you want to add another? (yes/no)");
-                            String response = in.nextLine();
-                            if (response.equalsIgnoreCase("no")) {
-                                continueAdding = false;
-                            }
-                        } catch (InputMismatchException e) {
-                            System.err.println("Invalid input for capacity. Please enter a number.");
-                            in.nextLine(); // Clear the invalid input
-                            continue;
-                        }
-                    }
-                    break;
-                case 2:
-                    viewGymDetails(loggedInOwnerId);
-                    break;
-                case 3:
-                    viewCustomers();
-                    break;
-                case 4:
-                    viewPayments();
-                    break;
-                case 5:
-                    boolean continueEditing = true;
-                    while (continueEditing) {
-                        System.out.println("\n--- Edit My Details ---");
-                        System.out.println("1. Change Name");
-                        System.out.println("2. Change Email");
-                        System.out.println("3. Change Password");
-                        System.out.println("4. Change Phone Number");
-                        System.out.println("5. Change City");
-                        System.out.println("6. Change Pincode");
-                        System.out.println("7. Change PAN");
-                        System.out.println("8. Change Aadhaar");
-                        System.out.println("9. Change GST");
-                        System.out.println("10. Back to main menu");
-                        System.out.print("Enter your choice: ");
-                        int editChoice = -1;
-                        try {
-                            editChoice = in.nextInt();
-                            in.nextLine();
-                        } catch (InputMismatchException e) {
-                            System.err.println("Invalid choice. Please enter a number from 1 to 10.");
-                            in.nextLine();
-                            continue;
-                        }
-
-                        if (editChoice == 10) {
-                            continueEditing = false;
-                            break;
-                        }
-
-                        System.out.print("Enter new value: ");
-                        String newValue = in.nextLine();
-                        editGymOwnerDetails(loggedInOwnerId, editChoice, newValue);
-                    }
-                    break;
-                case 6:
-                    exitOwnerMenu = true;
-                    System.out.println("Exiting Gym Owner menu.");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
-        }
     }
 }

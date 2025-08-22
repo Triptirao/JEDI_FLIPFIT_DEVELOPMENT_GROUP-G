@@ -61,9 +61,8 @@ public class GymOwnerClient {
             System.out.println("1. Add a new Gym Centre");
             System.out.println("2. View Gym Details");
             System.out.println("3. View Customers");
-            System.out.println("4. View Payments");
-            System.out.println("5. Edit Details");
-            System.out.println("6. Exit");
+            System.out.println("4. Edit Details");
+            System.out.println("5. Exit");
             System.out.print("Enter your choice: ");
 
             int choice;
@@ -88,12 +87,9 @@ public class GymOwnerClient {
                     viewCustomers();
                     break;
                 case 4:
-                    viewPayments();
-                    break;
-                case 5:
                     editDetails();
                     break;
-                case 6:
+                case 5:
                     System.out.println("Exiting Gym Owner Menu...");
                     return; // Exit the method and the loop.
                 default:
@@ -106,7 +102,7 @@ public class GymOwnerClient {
      * Prompts the gym owner for details to add a new gym centre.
      * The method first checks if the owner's account is approved.
      */
-    //TODO:
+    //TODO : centre will add 6 slots with fixed timing to the slot table (Done)
     private void addCentre() {
         try {
             // Retrieve the gym owner's data to check for approval status.
@@ -120,16 +116,21 @@ public class GymOwnerClient {
                     System.out.print("Enter gym capacity: ");
                     int capacity = in.nextInt();
                     in.nextLine();
+                    System.out.print("Enter cost of booking one slot: ");
+                    int cost = in.nextInt();
+                    in.nextLine();
                     System.out.print("Enter gym city: ");
                     String city = in.nextLine();
                     System.out.print("Enter gym state: ");
                     String state = in.nextLine();
                     System.out.print("Enter gym pin code: ");
                     String pincode = in.nextLine();
+                    System.out.print("Enter gym facilities (facilities separated by comma(,)): ");
+                    String facilities = in.nextLine();
 
                     // Create a new GymCentre object and call the service to add it.
                     // The centre is initially marked as not approved (false) by default.
-                    GymCentre newGym = new GymCentre(owner.getUserId(), name, null, capacity, false, city, state, pincode, null);
+                    GymCentre newGym = new GymCentre(owner.getUserId(), name, null, capacity, cost, false, city, state, pincode, facilities);
                     gymOwnerService.addCentre(newGym);
                     System.out.println("Gym Centre " + name + " added and awaiting admin approval.");
                 } else {
@@ -150,7 +151,7 @@ public class GymOwnerClient {
      * Calls the service layer to display the gym details associated with the
      * logged-in gym owner.
      */
-    //TODO
+    //TODO : approval status also to be shown (Done)
     private void viewGymDetails() {
         System.out.println("Viewing your gym details...");
         try {
@@ -163,7 +164,7 @@ public class GymOwnerClient {
     /**
      * Calls the service layer to display the list of customers.
      */
-    //TODO change to view booking
+    //TODO : change to view booking
     private void viewCustomers() {
         System.out.println("Viewing customers...");
         try {
@@ -174,22 +175,9 @@ public class GymOwnerClient {
     }
 
     /**
-     * Calls the service layer to display the payment history.
-     */
-    // Not required
-    private void viewPayments() {
-        System.out.println("Viewing payment history...");
-        try {
-            gymOwnerService.viewPayments();
-        } catch (Exception e) {
-            System.out.println("An error occurred while viewing payments: " + e.getMessage());
-        }
-    }
-
-    /**
      * Provides a sub-menu for the gym owner to edit their personal details.
      */
-    //TODO : check if working fine
+    //TODO : check if working fine, problem in sql query (Done)
     private void editDetails() {
         boolean continueEditing = true;
         while (continueEditing) {

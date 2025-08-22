@@ -54,6 +54,17 @@ public class Slot {
     /**
      * Constructs a new {@code Slot} object with all its properties initialized.
      *
+     * @param gymId      The ID of the gym.
+     * @param capacity   The maximum capacity for the slot.
+     */
+    public Slot(int gymId, int capacity) {
+        this.gymId = gymId;
+        this.capacity = capacity;
+    }
+
+    /**
+     * Constructs a new {@code Slot} object with all its properties initialized.
+     *
      * @param slotId      The unique identifier for the slot.
      * @param gymId       The ID of the gym.
      * @param startTime   The start time of the slot.

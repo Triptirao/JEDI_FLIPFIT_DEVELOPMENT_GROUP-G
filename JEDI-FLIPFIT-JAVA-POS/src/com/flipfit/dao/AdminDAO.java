@@ -263,6 +263,7 @@ public class AdminDAO {
                     rs.getString("name"),
                     rs.getString("slots"),
                     rs.getInt("capacity"),
+                    rs.getInt("cost"),
                     rs.getBoolean("approved"),
                     rs.getString("city"),
                     rs.getString("state"),
