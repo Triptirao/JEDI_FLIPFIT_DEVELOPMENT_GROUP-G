@@ -7,6 +7,13 @@ import com.flipfit.dao.UserDAO;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * The GymOwnerService class provides the business logic for all operations
+ * a gym owner can perform, such as managing gym centers, viewing customer lists,
+ * and editing their personal details.
+ *
+ * @author
+ */
 public class GymOwnerService implements gymOwnerInterface {
 
     private static final Scanner in = new Scanner(System.in);
@@ -14,16 +21,34 @@ public class GymOwnerService implements gymOwnerInterface {
     private CustomerDAO customerDao;
     private UserDAO userDao;
 
+    /**
+     * Parameterized constructor for GymOwnerService.
+     *
+     * @param gymOwnerDao The Data Access Object for gym owner operations.
+     * @param userDao The Data Access Object for general user operations.
+     * @param customerDao The Data Access Object for customer operations.
+     */
     public GymOwnerService(GymOwnerDAO gymOwnerDao, UserDAO userDao, CustomerDAO customerDao) {
         this.gymOwnerDao = gymOwnerDao;
         this.userDao = userDao;
         this.customerDao = customerDao;
     }
+
+    /**
+     * Adds a new gym center to the system.
+     *
+     * @param gymData A String array containing the details of the new gym center.
+     */
     public void addCentre(String[] gymData) {
         gymOwnerDao.addGym(gymData);
         System.out.println("Adding new gym centre: " + gymData[2]);
     }
 
+    /**
+     * Retrieves and displays the details of all gym centers owned by a specific gym owner.
+     *
+     * @param ownerId The unique ID of the gym owner.
+     */
     public void viewGymDetails(String ownerId) {
         System.out.println("Fetching details for all your gym centres...");
         List<String[]> gyms = gymOwnerDao.getGymsByOwnerId(ownerId);
@@ -41,22 +66,43 @@ public class GymOwnerService implements gymOwnerInterface {
         System.out.println("------------------------------------------------------------------");
     }
 
+    /**
+     * Retrieves and displays the list of customers for the gym owner's centers.
+     * Note: The implementation is currently a placeholder.
+     */
     public void viewCustomers() {
         System.out.println("Fetching customer list for your gym centres...");
         // This would call a method in a CustomerDAO
         System.out.println("No customers found.");
     }
 
+    /**
+     * Retrieves and displays the payment history for the gym owner.
+     * Note: The implementation is currently a placeholder.
+     */
     public void viewPayments() {
         System.out.println("Fetching payment history...");
         System.out.println("No payments found.");
     }
 
+    /**
+     * Updates a specific detail for the gym owner.
+     *
+     * @param ownerId The ID of the gym owner whose details are to be updated.
+     * @param choice An integer representing the detail to be updated (e.g., 1 for name, 2 for email).
+     * @param newValue The new value for the selected detail.
+     */
     public void editGymOwnerDetails(String ownerId, int choice, String newValue) {
         gymOwnerDao.updateGymOwnerDetails(ownerId, choice, newValue);
         System.out.println("Owner details updated successfully.");
     }
 
+    /**
+     * Displays the main menu for a logged-in gym owner and handles user input.
+     * It allows the owner to choose from various options to manage their gym centers.
+     *
+     * @param loggedInOwnerId The ID of the currently logged-in gym owner.
+     */
     public void displayGymOwnerMenu(String loggedInOwnerId) {
         boolean exitOwnerMenu = false;
         while (!exitOwnerMenu) {
