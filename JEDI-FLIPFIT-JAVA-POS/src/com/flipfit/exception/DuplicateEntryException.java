@@ -11,7 +11,7 @@ public class DuplicateEntryException extends RuntimeException {
      * Constructs a new DuplicateEntryException with a default detail message.
      */
     public DuplicateEntryException(String s, SQLException e) {
-        super("Duplicate entry found. The record already exists.");
+        super("Duplicate entry found. The record already exists. "+s);
     }
 
     /**

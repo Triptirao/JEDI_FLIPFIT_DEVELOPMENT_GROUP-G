@@ -4,6 +4,9 @@ import com.flipfit.bean.Booking;
 import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymCentre;
 import com.flipfit.utils.DBConnection;
+import com.flipfit.exception.DAOException;
+import com.flipfit.exception.MissingValueException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,7 +39,8 @@ public class CustomerDAO {
             ps.setString(3, customer.getPaymentInfo());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException as a custom DAOException
+            throw new DAOException("Failed to add customer details.", e);
         }
     }
 
@@ -50,7 +54,8 @@ public class CustomerDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException
+            throw new DAOException("Failed to retrieve customer by ID: " + userId, e);
         }
         return Optional.empty();
     }
@@ -61,9 +66,13 @@ public class CustomerDAO {
             ps.setInt(1, customer.getPaymentType());
             ps.setString(2, customer.getPaymentInfo());
             ps.setInt(3, customer.getUserId());
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not update customer. Customer with ID " + customer.getUserId() + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException
+            throw new DAOException("Failed to update customer details for ID: " + customer.getUserId(), e);
         }
     }
 
@@ -93,7 +102,8 @@ public class CustomerDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException
+            throw new DAOException("Failed to book slot.", e);
         }
 
         return bookingId;
@@ -110,7 +120,8 @@ public class CustomerDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException
+            throw new DAOException("Failed to retrieve bookings for customer ID: " + customerId, e);
         }
         return bookings;
     }
@@ -124,43 +135,70 @@ public class CustomerDAO {
                 approvedGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Wrap and re-throw SQLException
+            throw new DAOException("Failed to retrieve approved gyms.", e);
         }
         return approvedGyms;
     }
 
     private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
-        return new Customer(
-                rs.getInt("customerId"),
-                rs.getInt("paymentType"),
-                rs.getString("paymentInfo")
-        );
+        try {
+            return new Customer(
+                    rs.getInt("customerId"),
+                    rs.getInt("paymentType"),
+                    rs.getString("paymentInfo")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to Customer object.", e);
+        }
     }
 
     private GymCentre mapResultSetToGymCentre(ResultSet rs) throws SQLException {
-        return new GymCentre(
-                rs.getInt("centreId"),
-                rs.getInt("ownerId"),
-                rs.getString("name"),
-                rs.getString("slots"),
-                rs.getInt("capacity"),
-                rs.getBoolean("approved"),
-                rs.getString("city"),
-                rs.getString("state"),
-                rs.getString("pincode"),
-                rs.getString("facilities")
-        );
+        try {
+            return new GymCentre(
+                    rs.getInt("centreId"),
+                    rs.getInt("ownerId"),
+                    rs.getString("name"),
+                    rs.getString("slots"),
+                    rs.getInt("capacity"),
+                    rs.getBoolean("approved"),
+                    rs.getString("city"),
+                    rs.getString("state"),
+                    rs.getString("pincode"),
+                    rs.getString("facilities")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to GymCentre object.", e);
+        }
     }
 
     private Booking mapResultSetToBooking(ResultSet rs) throws SQLException {
-        return new Booking(
-                rs.getInt("bookingId"),
-                rs.getInt("customerId"),
-                rs.getInt("gymId"),
-                rs.getInt("slotId"),
-                rs.getString("bookingStatus"),
-                rs.getDate("bookingDate").toLocalDate(),
-                rs.getTime("bookingTime").toLocalTime()
-        );
+        try {
+            LocalDate bookingDate = null;
+            if (rs.getDate("bookingDate") != null) {
+                bookingDate = rs.getDate("bookingDate").toLocalDate();
+            } else {
+                throw new MissingValueException("Booking date is missing from database record.");
+            }
+
+            LocalTime bookingTime = null;
+            if (rs.getTime("bookingTime") != null) {
+                bookingTime = rs.getTime("bookingTime").toLocalTime();
+            } else {
+                throw new MissingValueException("Booking time is missing from database record.");
+            }
+
+            return new Booking(
+                    rs.getInt("bookingId"),
+                    rs.getInt("customerId"),
+                    rs.getInt("gymId"),
+                    rs.getInt("slotId"),
+                    rs.getString("bookingStatus"),
+                    bookingDate,
+                    bookingTime
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to Booking object.", e);
+        }
     }
 }

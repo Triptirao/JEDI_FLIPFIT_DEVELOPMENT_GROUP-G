@@ -1,6 +1,9 @@
 package com.flipfit.dao;
 
 import com.flipfit.bean.User;
+import com.flipfit.exception.DAOException;
+import com.flipfit.exception.DuplicateEntryException;
+import com.flipfit.exception.MissingValueException;
 import com.flipfit.utils.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,12 +22,11 @@ public class UserDAO {
     private static final String SELECT_USER_BY_ID = "SELECT * FROM `User` WHERE userId = ?";
     private static final String SELECT_USER_BY_EMAIL_PASSWORD = "SELECT * FROM `User` WHERE email = ? AND password = ?";
     private static final String DELETE_USER = "DELETE FROM `User` WHERE userId = ?";
-    private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, password = ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
+    private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
     private static final String SELECT_ALL_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = TRUE";
 
 
     public int addUser(User user) {
-        int userId = -1;
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getFullName());
@@ -35,15 +37,21 @@ public class UserDAO {
             ps.setInt(6, user.getPinCode());
             ps.executeUpdate();
 
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                userId = rs.getInt(1);
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Check for duplicate entry SQL state (a common state for unique constraint violations)
+            if (e.getSQLState().equals("23000")) {
+                throw new DuplicateEntryException("User with this email already exists.", e);
+            }
+            throw new DAOException("Failed to add new user.", e);
         }
-        return userId;
+        return -1;
     }
+
     public List<User> getAllCustomers() {
         List<User> customers = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -53,7 +61,7 @@ public class UserDAO {
                 customers.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve all customers.", e);
         }
         return customers;
     }
@@ -68,7 +76,7 @@ public class UserDAO {
                 userList.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve all users.", e);
         }
         return userList;
     }
@@ -83,7 +91,7 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve user by ID: " + userId, e);
         }
         return Optional.empty();
     }
@@ -99,7 +107,7 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to authenticate user.", e);
         }
         return Optional.empty();
     }
@@ -108,9 +116,12 @@ public class UserDAO {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
             ps.setInt(1, userId);
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not delete user. User with ID " + userId + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to delete user with ID: " + userId, e);
         }
     }
 
@@ -124,9 +135,15 @@ public class UserDAO {
             ps.setString(5, user.getCity());
             ps.setInt(6, user.getPinCode());
             ps.setInt(7, user.getUserId());
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not update user. User with ID " + user.getUserId() + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (e.getSQLState().equals("23000")) {
+                throw new DuplicateEntryException("User with this email already exists.", e);
+            }
+            throw new DAOException("Failed to update user details for ID: " + user.getUserId(), e);
         }
     }
 
@@ -139,22 +156,29 @@ public class UserDAO {
                 gymOwners.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve all gym owners.", e);
         }
         return gymOwners;
     }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
-        User user = new User(
-                rs.getInt("userId"),
-                rs.getString("fullName"),
-                rs.getString("email"),
-                rs.getString("password"),
-                rs.getLong("userPhone"),
-                rs.getString("city"),
-                rs.getInt("pinCode")
-        );
-        user.setRole("CUSTOMER"); // Manually set the role after fetching
-        return user;
+        try {
+            // Check for potential null values before returning the User object
+            if (rs.getString("fullName") == null || rs.getString("email") == null) {
+                throw new MissingValueException("Missing required data (fullName or email) from database record.");
+            }
+
+            return new User(
+                    rs.getInt("userId"),
+                    rs.getString("fullName"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getLong("userPhone"),
+                    rs.getString("city"),
+                    rs.getInt("pinCode")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to User object.", e);
+        }
     }
 }

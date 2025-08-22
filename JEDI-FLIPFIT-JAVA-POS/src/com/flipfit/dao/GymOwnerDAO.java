@@ -3,6 +3,8 @@ package com.flipfit.dao;
 import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.GymOwner;
 import com.flipfit.bean.User;
+import com.flipfit.exception.DAOException;
+import com.flipfit.exception.MissingValueException;
 import com.flipfit.utils.DBConnection;
 
 import java.sql.Connection;
@@ -48,7 +50,7 @@ public class GymOwnerDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve gym owner by ID: " + userId, e);
         }
         return Optional.empty();
     }
@@ -65,7 +67,7 @@ public class GymOwnerDAO {
             ps.setString(7, gym.getPincode());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to add gym center.", e);
         }
     }
 
@@ -80,7 +82,7 @@ public class GymOwnerDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve gyms for owner ID: " + ownerId, e);
         }
         return gyms;
     }
@@ -103,7 +105,7 @@ public class GymOwnerDAO {
             ps.setString(4, gymOwner.getGst());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to add gym owner.", e);
         }
     }
 
@@ -116,7 +118,7 @@ public class GymOwnerDAO {
                 gyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve all gyms.", e);
         }
         return gyms;
     }
@@ -130,9 +132,12 @@ public class GymOwnerDAO {
             ps.setString(2, gymOwner.getAadhaar());
             ps.setString(3, gymOwner.getGst());
             ps.setInt(4, gymOwner.getUserId());
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not update gym owner. Gym owner with ID " + gymOwner.getUserId() + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to update gym owner details for ID: " + gymOwner.getUserId(), e);
         }
     }
 
@@ -147,7 +152,7 @@ public class GymOwnerDAO {
                 pendingGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve pending gym requests.", e);
         }
         return pendingGyms;
     }
@@ -155,11 +160,13 @@ public class GymOwnerDAO {
     public void approveGym(int gymId) {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(APPROVE_GYM)) {
-            ps.setInt(1, 1); // `approved` is a boolean, so 1 or 0
-            ps.setInt(2, gymId);
-            ps.executeUpdate();
+            ps.setInt(1, gymId);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not approve gym. Gym with ID " + gymId + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to approve gym with ID: " + gymId, e);
         }
     }
 
@@ -167,9 +174,12 @@ public class GymOwnerDAO {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(DELETE_GYM)) {
             ps.setInt(1, gymId);
-            ps.executeUpdate();
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not delete gym. Gym with ID " + gymId + " not found.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to delete gym with ID: " + gymId, e);
         }
     }
 
@@ -182,7 +192,7 @@ public class GymOwnerDAO {
                 approvedGyms.add(mapResultSetToGymCentre(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve approved gyms.", e);
         }
         return approvedGyms;
     }
@@ -196,34 +206,42 @@ public class GymOwnerDAO {
                 pendingOwners.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Failed to retrieve pending gym owners.", e);
         }
         return pendingOwners;
     }
 
     private GymCentre mapResultSetToGymCentre(ResultSet rs) throws SQLException {
-        return new GymCentre(
-                rs.getInt("centreId"),
-                rs.getInt("ownerId"),
-                rs.getString("name"),
-                rs.getString("slots"),
-                rs.getInt("capacity"),
-                rs.getBoolean("approved"),
-                rs.getString("city"),
-                rs.getString("state"),
-                rs.getString("pincode"),
-                rs.getString("facilities")
-        );
+        try {
+            return new GymCentre(
+                    rs.getInt("centreId"),
+                    rs.getInt("ownerId"),
+                    rs.getString("name"),
+                    rs.getString("slots"),
+                    rs.getInt("capacity"),
+                    rs.getBoolean("approved"),
+                    rs.getString("city"),
+                    rs.getString("state"),
+                    rs.getString("pincode"),
+                    rs.getString("facilities")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to GymCentre object.", e);
+        }
     }
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
-        return new User(
-                rs.getInt("userId"),
-                rs.getString("fullName"),
-                rs.getString("email"),
-                rs.getString("password"),
-                rs.getLong("userPhone"),
-                rs.getString("city"),
-                rs.getInt("pinCode")
-        );
+        try {
+            return new User(
+                    rs.getInt("userId"),
+                    rs.getString("fullName"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getLong("userPhone"),
+                    rs.getString("city"),
+                    rs.getInt("pinCode")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to User object.", e);
+        }
     }
 }
