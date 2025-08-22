@@ -1,4 +1,11 @@
 package com.flipfit.exception;
 
-public class MissingValueException {
+/**
+ * Thrown when an expected value is null or missing.
+ */
+public class MissingValueException extends RuntimeException {
+
+    public MissingValueException(String message) {
+        super(message);
+    }
 }
