@@ -9,6 +9,13 @@ import com.flipfit.dao.UserDAO;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * The AdminService class provides the business logic for all administrative tasks.
+ * It interacts with various DAO classes to perform operations such as
+ * approving gym requests, viewing users, and deleting entities.
+ *
+ * @author
+ */
 public class AdminService implements adminInterface{
 
     private static final Scanner in = new Scanner(System.in);
@@ -17,11 +24,22 @@ public class AdminService implements adminInterface{
     private UserDAO userDao;
     private GymOwnerDAO gymOwnerDao;
 
+    /**
+     * Default constructor for AdminService. Initializes AdminDAO and CustomerDAO.
+     */
     public AdminService() {
         this.adminDao = new AdminDAO();
         this.customerDao = new CustomerDAO();
     }
 
+    /**
+     * Parameterized constructor for AdminService.
+     *
+     * @param adminDao The Data Access Object for admin-related operations.
+     * @param customerDao The Data Access Object for customer-related operations.
+     * @param userDao The Data Access Object for general user operations.
+     * @param gymOwnerDao The Data Access Object for gym owner operations.
+     */
     public AdminService(AdminDAO adminDao, CustomerDAO customerDao, UserDAO userDao, GymOwnerDAO gymOwnerDao) {
         this.adminDao = adminDao;
         this.customerDao = customerDao;
@@ -30,7 +48,8 @@ public class AdminService implements adminInterface{
     }
 
     /**
-     * Approves a pending gym center request.
+     * Approves a pending gym center request in the database.
+     *
      * @param gymId The ID of the gym center to approve.
      */
     public void approveGymRequest(String gymId) {
@@ -39,7 +58,8 @@ public class AdminService implements adminInterface{
     }
 
     /**
-     * Approves a pending gym owner registration request.
+     * Approves a pending gym owner registration request in the database.
+     *
      * @param email The email of the gym owner to approve.
      */
     public void approveGymOwnerRequest(String email) {
@@ -47,6 +67,9 @@ public class AdminService implements adminInterface{
         System.out.println("Gym owner with email " + email + " approved successfully.");
     }
 
+    /**
+     * Fetches and displays a list of all pending gym requests.
+     */
     public void viewPendingGyms() {
         System.out.println("Fetching all pending gym requests...");
         List<String[]> pendingGyms = adminDao.getPendingGymRequests();
@@ -64,7 +87,9 @@ public class AdminService implements adminInterface{
         System.out.println("--------------------------------------------------");
     }
 
-    // Edited method to fix the ArrayIndexOutOfBoundsException
+    /**
+     * Fetches and displays a list of all pending gym owner registration requests.
+     */
     public void viewPendingGymOwners() {
         System.out.println("Fetching all pending gym owner requests...");
         List<String[]> pendingOwners = adminDao.getPendingGymOwnerRequests();
@@ -82,6 +107,9 @@ public class AdminService implements adminInterface{
         System.out.println("--------------------------------------------------");
     }
 
+    /**
+     * Fetches and displays a list of all approved and registered gyms.
+     */
     public void viewAllGyms() {
         System.out.println("Fetching all registered gym centers...");
         List<String[]> allGyms = adminDao.getAllGyms();
@@ -96,6 +124,9 @@ public class AdminService implements adminInterface{
         }
     }
 
+    /**
+     * Fetches and displays a list of all approved and registered gym owners.
+     */
     public void viewAllGymOwners() {
         System.out.println("Fetching all registered gym owners...");
         List<String[]> allOwners = adminDao.getAllGymOwners();
@@ -110,6 +141,9 @@ public class AdminService implements adminInterface{
         }
     }
 
+    /**
+     * Fetches and displays a list of all registered customers.
+     */
     public void viewAllCustomers(){
         System.out.println("Fetching all registered customers...");
         List<String[]> allCustomers = adminDao.getAllCustomers();
@@ -127,11 +161,21 @@ public class AdminService implements adminInterface{
         }
     }
 
+    /**
+     * Deletes a user from the system by their ID.
+     *
+     * @param userId The ID of the user to delete.
+     */
     public void deleteUserById(int userId) {
         adminDao.deleteUser(String.valueOf(userId));
         System.out.println("User with ID: " + userId + " deleted successfully.");
     }
 
+    /**
+     * Deletes a gym from the system by its ID.
+     *
+     * @param gymId The ID of the gym to delete.
+     */
     public void deleteGymById(int gymId) {
         adminDao.deleteGym(String.valueOf(gymId));
         System.out.println("Gym with ID: " + gymId + " deleted successfully.");
@@ -139,6 +183,7 @@ public class AdminService implements adminInterface{
 
     /**
      * This method handles the entire admin menu flow with a while loop.
+     * It presents options to the user and calls the appropriate methods based on the user's choice.
      */
     public static void displayAdminMenu() {
         boolean exitAdminMenu = false;
