@@ -15,6 +15,12 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The ApplicationClient class serves as the main entry point for the FlipFit application's
+ * command-line interface. It handles user authentication (login and registration)
+ * and directs the user to the appropriate client menu based on their role (Admin, Gym Owner, or Customer).
+ * @author
+ */
 public class ApplicationClient {
 
     private final Scanner scanner = new Scanner(System.in);
@@ -32,6 +38,14 @@ public class ApplicationClient {
     private static final String PHONE_REGEX = "^[0-9]{10}$";
     private static final Pattern PHONE_PATTERN = Pattern.compile(PHONE_REGEX);
 
+    /**
+     * Constructs an ApplicationClient with all the necessary Data Access Objects (DAOs).
+     * It also initializes the various service classes that handle business logic.
+     * @param userDao      The DAO for user data.
+     * @param adminDao     The DAO for admin data.
+     * @param gymOwnerDao  The DAO for gym owner data.
+     * @param customerDao  The DAO for customer data.
+     */
     public ApplicationClient(UserDAO userDao, AdminDAO adminDao, GymOwnerDAO gymOwnerDao, CustomerDAO customerDao) {
         this.userDao = userDao;
         this.adminDao = adminDao;
@@ -44,6 +58,10 @@ public class ApplicationClient {
         CustomerService customerService = new CustomerService(this.userDao, this.customerDao, this.gymOwnerDao);
     }
 
+    /**
+     * Prompts the user for their email and password and attempts to log in.
+     * If successful, it directs the user to the appropriate client page based on their role.
+     */
     public void login() {
         System.out.println("--- Login ---");
         System.out.print("Enter email: ");
@@ -76,6 +94,10 @@ public class ApplicationClient {
         }
     }
 
+    /**
+     * Guides a user through the customer registration process, gathering necessary details
+     * and calling the AuthenticationService to register them.
+     */
     public void registerCustomer() {
         System.out.println("--- Customer Registration ---");
         System.out.print("Enter your full name: ");
@@ -102,6 +124,12 @@ public class ApplicationClient {
         authenticationService.registerCustomer(fullName, email, password, phone, city, pinCode, paymentType, paymentInfo);
         System.out.println("Registration Successful");
     }
+
+    /**
+     * Guides a user through the gym owner registration process, gathering details
+     * and submitting the request to the AuthenticationService. The registration is
+     * pending approval by an admin.
+     */
     public void registerOwner() {
         System.out.println("--- Gym Owner Registration ---");
         System.out.print("Enter your name: ");
