@@ -7,6 +7,8 @@ import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.User;
 import com.flipfit.bean.GymOwner;
 
+import java.sql.SQLException;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -48,7 +50,8 @@ public class GymOwnerService implements gymOwnerInterface {
     @Override
     public void viewGymDetails(int ownerId) {
         System.out.println("Fetching details for all your gym centres...");
-        List<GymCentre> gyms = gymOwnerDao.getGymsByOwnerId(ownerId);
+        List<GymCentre> gyms = null;
+        gyms = gymOwnerDao.getGymsByOwnerId(ownerId);
 
         System.out.println("------------------------------------------------------------------");
         System.out.printf("%-15s %-20s %-20s %n", "Gym ID", "Name", "Location");
@@ -69,7 +72,8 @@ public class GymOwnerService implements gymOwnerInterface {
     @Override
     public void viewCustomers() {
         System.out.println("Fetching customer list...");
-        List<User> customers = userDao.getAllCustomers();
+        List<User> customers = null;
+        customers = userDao.getAllCustomers();
 
         if (customers.isEmpty()) {
             System.out.println("No customers found.");
@@ -103,8 +107,10 @@ public class GymOwnerService implements gymOwnerInterface {
     @Override
     public void editGymOwnerDetails(int ownerId, int choice, String newValue) {
         // Fetch the existing user and gym owner data from the database
-        Optional<User> userOptional = userDao.getUserById(ownerId);
-        Optional<GymOwner> gymOwnerOptional = gymOwnerDao.getGymOwnerById(ownerId);
+        Optional<User> userOptional = null;
+        Optional<GymOwner> gymOwnerOptional = null;
+        userOptional = userDao.getUserById(ownerId);
+        gymOwnerOptional = gymOwnerDao.getGymOwnerById(ownerId);
 
         if (!userOptional.isPresent() || !gymOwnerOptional.isPresent()) {
             System.out.println("Error: User or Gym Owner not found.");
@@ -115,17 +121,22 @@ public class GymOwnerService implements gymOwnerInterface {
         GymOwner gymOwner = gymOwnerOptional.get();
 
         // Update the correct field based on user choice
-        switch (choice) {
-            case 1: user.setFullName(newValue); break;
-            case 2: user.setEmail(newValue); break;
-            case 3: user.setPassword(newValue); break;
-            case 4: user.setUserPhone(Long.parseLong(newValue)); break;
-            case 5: user.setCity(newValue); break;
-            case 6: user.setPinCode(Integer.parseInt(newValue)); break;
-            case 7: gymOwner.setPan(newValue); break;
-            case 8: gymOwner.setAadhaar(newValue); break;
-            case 9: gymOwner.setGst(newValue); break;
-            default: System.out.println("Invalid choice for update."); return;
+        try {
+            switch (choice) {
+                case 1: user.setFullName(newValue); break;
+                case 2: user.setEmail(newValue); break;
+                case 3: user.setPassword(newValue); break;
+                case 4: user.setUserPhone(Long.parseLong(newValue)); break;
+                case 5: user.setCity(newValue); break;
+                case 6: user.setPinCode(Integer.parseInt(newValue)); break;
+                case 7: gymOwner.setPan(newValue); break;
+                case 8: gymOwner.setAadhaar(newValue); break;
+                case 9: gymOwner.setGst(newValue); break;
+                default: System.out.println("Invalid choice for update."); return;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid format for phone number or pincode. Please enter a valid number.");
+            return;
         }
 
         // Persist the changes to the database by calling the DAOs
@@ -151,33 +162,46 @@ public class GymOwnerService implements gymOwnerInterface {
             System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
 
-            int choice = in.nextInt();
-            in.nextLine(); // Consume newline
+            int choice = -1;
+            try {
+                choice = in.nextInt();
+                in.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.err.println("Invalid input. Please enter a number from 1 to 6.");
+                in.nextLine(); // Clear the invalid input from the scanner
+                continue; // Restart the loop
+            }
 
             switch (choice) {
                 case 1:
                     boolean continueAdding = true;
                     while (continueAdding) {
-                        System.out.println("\n--- Add a New Gym Centre ---");
-                        System.out.print("Enter gym name: ");
-                        String name = in.nextLine();
-                        System.out.print("Enter gym capacity: ");
-                        int capacity = in.nextInt();
-                        in.nextLine();
-                        System.out.print("Enter gym city: ");
-                        String city = in.nextLine();
-                        System.out.print("Enter gym state: ");
-                        String state = in.nextLine();
-                        System.out.print("Enter gym pincode: ");
-                        String pincode = in.nextLine();
+                        try {
+                            System.out.println("\n--- Add a New Gym Centre ---");
+                            System.out.print("Enter gym name: ");
+                            String name = in.nextLine();
+                            System.out.print("Enter gym capacity: ");
+                            int capacity = in.nextInt();
+                            in.nextLine();
+                            System.out.print("Enter gym city: ");
+                            String city = in.nextLine();
+                            System.out.print("Enter gym state: ");
+                            String state = in.nextLine();
+                            System.out.print("Enter gym pincode: ");
+                            String pincode = in.nextLine();
 
-                        GymCentre newGym = new GymCentre(0, loggedInOwnerId, name, null, capacity, false, city, state, pincode, null);
-                        addCentre(newGym);
+                            GymCentre newGym = new GymCentre(0, loggedInOwnerId, name, null, capacity, false, city, state, pincode, null);
+                            addCentre(newGym);
 
-                        System.out.println("Gym Centre with name " + name + " and location " + city + ", " + state + " added. Do you want to add another? (yes/no)");
-                        String response = in.nextLine();
-                        if (response.equalsIgnoreCase("no")) {
-                            continueAdding = false;
+                            System.out.println("Gym Centre with name " + name + " and location " + city + ", " + state + " added. Do you want to add another? (yes/no)");
+                            String response = in.nextLine();
+                            if (response.equalsIgnoreCase("no")) {
+                                continueAdding = false;
+                            }
+                        } catch (InputMismatchException e) {
+                            System.err.println("Invalid input for capacity. Please enter a number.");
+                            in.nextLine(); // Clear the invalid input
+                            continue;
                         }
                     }
                     break;
@@ -205,8 +229,16 @@ public class GymOwnerService implements gymOwnerInterface {
                         System.out.println("9. Change GST");
                         System.out.println("10. Back to main menu");
                         System.out.print("Enter your choice: ");
-                        int editChoice = in.nextInt();
-                        in.nextLine();
+                        int editChoice = -1;
+                        try {
+                            editChoice = in.nextInt();
+                            in.nextLine();
+                        } catch (InputMismatchException e) {
+                            System.err.println("Invalid choice. Please enter a number from 1 to 10.");
+                            in.nextLine();
+                            continue;
+                        }
+
                         if (editChoice == 10) {
                             continueEditing = false;
                             break;

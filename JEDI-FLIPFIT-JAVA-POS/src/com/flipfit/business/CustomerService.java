@@ -1,11 +1,18 @@
 package com.flipfit.business;
 
 import com.flipfit.bean.Booking;
+import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymCentre;
+import com.flipfit.bean.User;
 import com.flipfit.dao.*;
+import com.flipfit.exception.DuplicateEntryException;
+import com.flipfit.exception.MismatchinputException;
+import com.flipfit.exception.MissingValueException;
+import java.sql.SQLException; // This is a necessary import as DAO methods are assumed to throw it.
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
+import java.util.Optional;
 
 /**
  * The CustomerService class provides the business logic for customer-related operations.
@@ -35,7 +42,6 @@ public class CustomerService implements customerInterface {
     @Override
     public List<Booking> viewBookedSlots(int customerId) {
         System.out.println("Fetching your booked slots...");
-        // Call the new database-based method from BookingDAO
         return customerDao.getBookingsByCustomerId(customerId);
     }
 
@@ -47,7 +53,6 @@ public class CustomerService implements customerInterface {
     @Override
     public List<GymCentre> viewCenters() {
         System.out.println("Fetching all available gym centers...");
-        // Call the new database-based method from GymCentreDAO
         return customerDao.getApprovedGyms();
     }
 
@@ -62,8 +67,14 @@ public class CustomerService implements customerInterface {
     @Override
     public void bookSlot(int customerId, int gymId, int slotId, LocalDate bookingDate) {
         System.out.println("Booking your slot...");
+
+        // Throw MissingValueException for null bookingDate
+        if (bookingDate == null) {
+            throw new MissingValueException("Booking date cannot be null.");
+        }
+
         System.out.println("GymId: " + gymId + ", SlotId: " + slotId + ", BookingDate: " + bookingDate + "customerid: " + customerId);
-        // Create a new Booking object with the provided details
+
         Booking newBooking = new Booking(
                 customerId,
                 gymId,
@@ -73,9 +84,7 @@ public class CustomerService implements customerInterface {
                 LocalTime.now()
         );
 
-        // Call the database-based method in the DAO
         customerDao.bookSlot(newBooking);
-
         System.out.println("Slot booked successfully!");
     }
 
@@ -89,12 +98,18 @@ public class CustomerService implements customerInterface {
     @Override
     public void makePayments(int customerId, int paymentType, String paymentInfo) {
         System.out.println("Processing payment of type: " + paymentType + " with account: " + paymentInfo);
-        // Fetch the customer to update their payment details
-        customerDao.getCustomerById(customerId).ifPresent(customer -> {
-            customer.setPaymentType(paymentType);
-            customer.setPaymentInfo(paymentInfo);
-            customerDao.updateCustomer(customer);
-        });
+
+        // Throw MissingValueException if the customer is not found
+        Optional<Customer> optionalCustomer = customerDao.getCustomerById(customerId);
+        if (optionalCustomer.isEmpty()) {
+            throw new MissingValueException("Customer with ID " + customerId + " not found.");
+        }
+
+        Customer customer = optionalCustomer.get();
+        customer.setPaymentType(paymentType);
+        customer.setPaymentInfo(paymentInfo);
+
+        customerDao.updateCustomer(customer);
     }
 
     /**
@@ -106,44 +121,51 @@ public class CustomerService implements customerInterface {
      */
     @Override
     public void editCustomerDetails(int userId, int choice, String newValue) {
-        userDao.getUserById(userId).ifPresent(user -> {
-            switch (choice) {
-                case 1: // Name
-                    user.setFullName(newValue);
-                    break;
-                case 2: // Email
-                    user.setEmail(newValue);
-                    break;
-                case 3: // Password
-                    user.setPassword(newValue);
-                    break;
-                case 4: // Phone Number
-                    try {
-                        long newPhone = Long.parseLong(newValue);
-                        user.setUserPhone(newPhone);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid phone number format. Please enter a valid number.");
-                        return; // Exit the method on error
-                    }
-                    break;
-                case 5: // City
-                    user.setCity(newValue);
-                    break;
-                case 6: // Pincode
-                    try {
-                        int newPincode = Integer.parseInt(newValue);
-                        user.setPinCode(newPincode);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid pin code format. Please enter a valid number.");
-                        return; // Exit the method on error
-                    }
-                    break;
-                default:
-                    System.err.println("Invalid choice for update.");
-                    return; // Exit the method on invalid choice
-            }
-            userDao.updateUser(user);
-            System.out.println("Customer details updated successfully.");
-        });
+        // Throw MissingValueException if the user is not found
+        Optional<User> optionalUser = userDao.getUserById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new MissingValueException("User with ID " + userId + " not found.");
+        }
+
+        User user = optionalUser.get();
+
+        switch (choice) {
+            case 1: // Name
+                user.setFullName(newValue);
+                break;
+            case 2: // Email
+                user.setEmail(newValue);
+                break;
+            case 3: // Password
+                user.setPassword(newValue);
+                break;
+            case 4: // Phone Number
+                try {
+                    long newPhone = Long.parseLong(newValue);
+                    user.setUserPhone(newPhone);
+                } catch (NumberFormatException e) {
+                    // Throw MismatchinputException for invalid number format
+                    throw new MismatchinputException("Invalid phone number format. Please enter a valid number.", e);
+                }
+                break;
+            case 5: // City
+                user.setCity(newValue);
+                break;
+            case 6: // Pincode
+                try {
+                    int newPincode = Integer.parseInt(newValue);
+                    user.setPinCode(newPincode);
+                } catch (NumberFormatException e) {
+                    // Throw MismatchinputException for invalid pincode format
+                    throw new MismatchinputException("Invalid pin code format. Please enter a valid number.", e);
+                }
+                break;
+            default:
+                // Throw MismatchinputException for an invalid choice
+                throw new MismatchinputException("Invalid choice for update.");
+        }
+
+        userDao.updateUser(user);
+        System.out.println("Customer details updated successfully.");
     }
 }
