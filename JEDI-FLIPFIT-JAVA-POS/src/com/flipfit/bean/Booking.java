@@ -1,7 +1,7 @@
 package com.flipfit.bean;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 /**
  * The Booking class represents a single booking made by a customer for a gym slot.
@@ -44,7 +44,7 @@ public class Booking {
     /**
      * The time at which the booking was made.
      */
-    private LocalTime bookingTime;
+    private LocalDateTime dateAndTimeOfBooking;
 
     /**
      * Constructs a new Booking object with a system-generated booking time.
@@ -54,16 +54,16 @@ public class Booking {
      * @param centreId      The ID of the gym center.
      * @param slotId        The ID of the booked slot.
      * @param booked        The initial status of the booking (e.g., "BOOKED").
-     * @param now           The date of the booking.
-     * @param nowed         The time the booking was created.
+     * @param date          The date of the booking.
+     * @param now           The date and time when the booking was created.
      */
-    public Booking(int customerId, int centreId, int slotId, String booked, LocalDate now, LocalTime nowed) {
+    public Booking(int customerId, int centreId, int slotId, String booked, LocalDate date, LocalDateTime now) {
         this.customerId = customerId;
         this.gymId = centreId;
         this.slotId = slotId;
         this.bookingStatus = booked;
-        this.bookingDate = now;
-        this.bookingTime = nowed;
+        this.bookingDate = date;
+        this.dateAndTimeOfBooking = now;
     }
 
     /**
@@ -75,17 +75,17 @@ public class Booking {
      * @param gymId          The ID of the gym center.
      * @param slotId         The ID of the booked slot.
      * @param bookingStatus  The status of the booking.
-     * @param bookingDate    The date of the booking.
-     * @param bookingTime    The time the booking was created.
+     * @param date           The date of the booking.
+     * @param now            The date and time when the booking was created.
      */
-    public Booking(int bookingId, int customerId, int gymId, int slotId, String bookingStatus, LocalDate bookingDate, LocalTime bookingTime) {
+    public Booking(int bookingId, int customerId, int gymId, int slotId, String bookingStatus, LocalDate date, LocalDateTime now) {
         this.bookingId = bookingId;
         this.customerId = customerId;
         this.gymId = gymId;
         this.slotId = slotId;
         this.bookingStatus = bookingStatus;
-        this.bookingDate = bookingDate;
-        this.bookingTime = bookingTime;
+        this.bookingDate = date;
+        this.dateAndTimeOfBooking = now;
     }
 
     /**
@@ -197,20 +197,20 @@ public class Booking {
     }
 
     /**
-     * Gets the time at which the booking was created.
+     * Gets the date and time when the booking was created.
      *
-     * @return The booking time.
+     * @return The booking date and time.
      */
-    public LocalTime getBookingTime() {
-        return bookingTime;
+    public LocalDateTime getDateAndTimeOfBooking() {
+        return dateAndTimeOfBooking;
     }
 
     /**
-     * Sets the time for the booking.
+     * Sets the date and time when the booking was created.
      *
-     * @param bookingTime The new booking time.
+     * @param dateAndTimeOfBooking The new booking date and time.
      */
-    public void setBookingTime(LocalTime bookingTime) {
-        this.bookingTime = bookingTime;
+    public void setDateAndTimeOfBooking(LocalDateTime dateAndTimeOfBooking) {
+        this.dateAndTimeOfBooking = dateAndTimeOfBooking;
     }
 }

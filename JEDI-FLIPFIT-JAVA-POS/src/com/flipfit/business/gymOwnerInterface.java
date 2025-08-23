@@ -28,9 +28,16 @@ public interface gymOwnerInterface {
     void viewGymDetails(int ownerId);
 
     /**
-     * Retrieves and displays the list of customers for the gym owner's centers.
+     * Retrieves and displays the list of bookings for the given gym ID.
      */
-    void viewCustomers();
+    void viewBookings(int gymId);
+
+    /**
+     * checks if there exists a given gym belonging to given owner.
+     * @param ownerId The ID of the gym owner.
+     * @param gymId The ID of the gym.
+     */
+    boolean validateGymId(int ownerId, int gymId);
 
     /**
      * Retrieves and displays the payment history for the gym owner.

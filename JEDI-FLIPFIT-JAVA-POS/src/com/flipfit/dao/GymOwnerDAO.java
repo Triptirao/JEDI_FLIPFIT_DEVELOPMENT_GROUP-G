@@ -1,15 +1,14 @@
 package com.flipfit.dao;
 
-import com.flipfit.bean.GymCentre;
-import com.flipfit.bean.GymOwner;
-import com.flipfit.bean.Slot;
-import com.flipfit.bean.User;
+import com.flipfit.bean.*;
 import com.flipfit.exception.DAOException;
 import com.flipfit.exception.DuplicateEntryException;
 import com.flipfit.exception.MissingValueException;
 import com.flipfit.utils.DBConnection;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -44,9 +43,11 @@ public class GymOwnerDAO {
     private static final String SELECT_ALL_GYMS = "SELECT * FROM GymCentre";
     private static final String INSERT_GYM_CENTRE = "INSERT INTO GymCentre (ownerId, name, capacity, cost, approved, city, state, pincode, facilities) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String SELECT_GYMS_BY_OWNER_ID = "SELECT * FROM GymCentre WHERE ownerId = ?";
+    private static final String SELECT_GYM_BY_OWNER_ID_AND_GYM_ID = "SELECT * FROM GymCentre WHERE ownerId = ? AND centreId = ? AND approved = TRUE";
     private static final String UPDATE_GYM_OWNER_DETAILS = "UPDATE GymOwner SET pan = ?, aadhaar = ?, gst = ? WHERE ownerId = ?";
     private static final String SELECT_PENDING_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = FALSE";
     private static final String INSERT_SLOT_DETAILS = "INSERT INTO Slot (gymId, startTime, endTime, capacity, bookedCount) VALUES (?, ?, ?, ?, ?)";
+    private static final String SELECT_BOOKINGS_BY_GYM_ID = "SELECT * FROM Booking WHERE gymId = ?";
 
     /**
      * Retrieves a {@code GymOwner} by their user ID.
@@ -170,12 +171,45 @@ public class GymOwnerDAO {
     }
 
     /**
-     * Retrieves a list of all customers from the system.
+     * Retrieves a list of all bookings for a particular gym.
      *
-     * @return A {@link List} of {@code User} objects with the customer role.
+     * @return A {@link List} of {@code Booking} objects.
      */
-    public List<User> getAllCustomers() {
-        return userDao.getAllCustomers();
+    public List<Booking> getAllBookingsByGymId(int gymId) {
+        List<Booking> bookings = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_BOOKINGS_BY_GYM_ID)) {
+            ps.setInt(1, gymId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bookings.add(mapResultSetToBooking(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to retrieve booking for gym ID: " + gymId, e);
+        }
+        return bookings;
+    }
+
+    /**
+     * checks if there exists a given gym belonging to given owner.
+     * @param ownerId The ID of the gym owner.
+     * @param gymId The ID of the gym.
+     */
+    public boolean validateGymId(int ownerId, int gymId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_GYM_BY_OWNER_ID_AND_GYM_ID)) {
+            ps.setInt(1, ownerId);
+            ps.setInt(2, gymId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to validate gym ID for owner ID: " + ownerId, e);
+        }
+        return false;
     }
 
     /**
@@ -400,6 +434,43 @@ public class GymOwnerDAO {
             );
         } catch (SQLException e) {
             throw new DAOException("Failed to map ResultSet to User object.", e);
+        }
+    }
+
+    /**
+     * Maps a ResultSet row to a Booking object.
+     * @param rs The ResultSet containing the booking data.
+     * @return A Booking object.
+     * @throws DAOException If a database access error occurs during mapping.
+     * @throws MissingValueException If a required value like bookingDate or bookingTime is null.
+     */
+    private Booking mapResultSetToBooking(ResultSet rs) throws SQLException {
+        try {
+            LocalDate bookingDate = null;
+            if (rs.getDate("bookingDate") != null) {
+                bookingDate = rs.getDate("bookingDate").toLocalDate();
+            } else {
+                throw new MissingValueException("Booking date is missing from database record.");
+            }
+
+            LocalDateTime dateAndTimeOfBooking = null;
+            if (rs.getTime("dateAndTimeOfBooking") != null) {
+                dateAndTimeOfBooking = rs.getTimestamp("dateAndTimeOfBooking").toLocalDateTime();
+            } else {
+                throw new MissingValueException("Date and time of booking is missing from database record.");
+            }
+
+            return new Booking(
+                    rs.getInt("bookingId"),
+                    rs.getInt("customerId"),
+                    rs.getInt("gymId"),
+                    rs.getInt("slotId"),
+                    rs.getString("bookingStatus"),
+                    bookingDate,
+                    dateAndTimeOfBooking
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to Booking object.", e);
         }
     }
 }

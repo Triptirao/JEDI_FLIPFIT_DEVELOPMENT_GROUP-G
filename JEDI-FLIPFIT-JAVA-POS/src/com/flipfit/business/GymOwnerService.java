@@ -6,8 +6,6 @@ import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
 import com.flipfit.exception.MismatchinputException;
 
-import java.sql.SQLException;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -74,26 +72,36 @@ public class GymOwnerService implements gymOwnerInterface {
     }
 
     /**
-     * Retrieves and displays the list of customers for the gym owner's centers.
+     * Retrieves and displays the list of bookings for a particular gym centre.
      */
     @Override
-    public void viewCustomers() {
-        System.out.println("Fetching customer list...");
-        List<User> customers = null;
-        customers = userDao.getAllCustomers();
+    public void viewBookings(int gymId) {
+        System.out.println("Fetching bookings list...");
+        List<Booking> bookings = null;
+        bookings = gymOwnerDao.getAllBookingsByGymId(gymId);
 
-        if (customers.isEmpty()) {
-            System.out.println("No customers found.");
+        if (bookings.isEmpty()) {
+            System.out.println("No bookings found.");
             return;
         }
 
         System.out.println("----------------------------------------");
-        System.out.printf("%-10s %-20s %n", "ID", "Name");
+        System.out.printf("%-10s %-20s %-20s %-20s %-20s %n", "Booking ID", "Slot ID", "Booking Status", "Booking Date", "Date and Time of Booking");
         System.out.println("----------------------------------------");
-        for (User customer : customers) {
-            System.out.printf("%-10d %-20s %n", customer.getUserId(), customer.getFullName());
+        for (Booking booking : bookings) {
+            System.out.printf("%-10s %-20s %-20s %-20s %-20s %n", booking.getBookingId(), booking.getSlotId(), booking.getBookingStatus(), booking.getBookingDate().toString(), booking.getDateAndTimeOfBooking().toString());
         }
         System.out.println("----------------------------------------");
+    }
+
+    /**
+     * checks if there exists a given gym belonging to given owner.
+     * @param ownerId The ID of the gym owner.
+     * @param gymId The ID of the gym.
+     */
+    @Override
+    public boolean validateGymId(int ownerId, int gymId) {
+        return gymOwnerDao.validateGymId(ownerId, gymId);
     }
 
     /**

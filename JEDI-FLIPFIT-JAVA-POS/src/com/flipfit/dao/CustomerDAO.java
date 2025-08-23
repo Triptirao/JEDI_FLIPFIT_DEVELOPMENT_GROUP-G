@@ -3,16 +3,14 @@ package com.flipfit.dao;
 import com.flipfit.bean.Booking;
 import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymCentre;
+import com.flipfit.bean.Slot;
 import com.flipfit.utils.DBConnection;
 import com.flipfit.exception.DAOException;
 import com.flipfit.exception.MissingValueException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +33,17 @@ public class CustomerDAO {
     private static final String UPDATE_CUSTOMER_BALANCE = "UPDATE Customer SET balance = balance + ? WHERE customerId = ?";
 
     // SQL queries for booking table
-    private static final String INSERT_BOOKING = "INSERT INTO Booking (customerId, gymId, slotId, bookingStatus, bookingDate, bookingTime) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String INSERT_BOOKING = "INSERT INTO Booking (customerId, gymId, slotId, bookingStatus, bookingDate, dateAndTimeOfBooking) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String SELECT_BOOKINGS_BY_CUSTOMER_ID = "SELECT * FROM Booking WHERE customerId = ?";
+    private static final String SELECT_NUMBER_OF_BOOKINGS = "SELECT COUNT(*) FROM Booking WHERE slotId = ? AND bookingDate = ?";
 
+    //SQL queries for gymCentre table
     private static final String SELECT_APPROVED_GYMS = "SELECT * FROM GymCentre WHERE approved = TRUE";
+    private static final String SELECT_GYM_BY_ID = "SELECT * FROM GymCentre WHERE centreId = ? and approved = TRUE";
+
+    //SQL queries for slot table
+    private static final String SELECT_SLOT_BY_ID = "SELECT * FROM Slot WHERE slotId = ?";
+    private static final String UPDATE_SLOT_BOOKING_COUNT = "UPDATE Slot SET bookedCount = bookedCount + 1 WHERE slotId = ?";
 
     /**
      * Adds a new customer's payment details to the database.
@@ -148,31 +153,51 @@ public class CustomerDAO {
      * @return The auto-generated booking ID.
      * @throws DAOException If a database access error occurs.
      */
-    public int bookSlot(Booking booking) {
-        int bookingId = -1;
-        String sql = "INSERT INTO Booking (customerId, gymId, slotId, bookingStatus, bookingDate, bookingTime) VALUES (?, ?, ?, ?, ?, ?)";
-
+    public Optional<Integer> bookSlot(Booking booking, int gymCost) {
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = con.prepareStatement(INSERT_BOOKING, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, booking.getCustomerId());
             ps.setInt(2, booking.getGymId());
             ps.setInt(3, booking.getSlotId());
             ps.setString(4, booking.getBookingStatus());
             ps.setObject(5, booking.getBookingDate());
-            ps.setObject(6, booking.getBookingTime());
-            ps.executeUpdate();
+            ps.setObject(6, booking.getDateAndTimeOfBooking());
+            int affectedRows = ps.executeUpdate();
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    bookingId = rs.getInt(1);
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        makePayment(booking.getCustomerId(), (-1*gymCost));
+                        updateSlotBookingCount(booking.getSlotId());
+                        return Optional.of(rs.getInt(1));
+                    }
                 }
             }
         } catch (SQLException e) {
             throw new DAOException("Failed to book slot.", e);
         }
 
-        return bookingId;
+        return Optional.empty();
+    }
+
+    /**
+     * Updates an existing slot's booking count.
+     *
+     * @param slotId The ID od slot to be updated.
+     * @throws DAOException If a database access error occurs.
+     */
+    public void updateSlotBookingCount(int slotId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(UPDATE_SLOT_BOOKING_COUNT)) {
+            ps.setInt(1, slotId);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new DAOException("Could not update slot booking count. Slot with ID " + slotId + " not found.");
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to update slot booking count for ID: " + slotId, e);
+        }
     }
 
     /**
@@ -195,6 +220,70 @@ public class CustomerDAO {
             throw new DAOException("Failed to retrieve bookings for customer ID: " + customerId, e);
         }
         return bookings;
+    }
+
+    /**
+     * Retrieves gym centre with given gym ID.
+     * @return A GymCentre object.
+     * @throws DAOException If a database access error occurs.
+     */
+    public Optional<GymCentre> getGymById(int gymId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_GYM_BY_ID)) {
+            ps.setInt(1, gymId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToGymCentre(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to retrieve gym with ID: " + gymId, e);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Retrieves slot with given slot ID.
+     * @return A Slot object.
+     * @throws DAOException If a database access error occurs.
+     */
+    public Optional<Slot> getSlotById(int slotId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_SLOT_BY_ID)) {
+            ps.setInt(1, slotId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToSlot(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to retrieve slot with ID: " + slotId, e);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Retrieves number of bookings for a given slot on a particular date.
+     * @param slotId The ID of the slot.
+     * @param bookingDate The date of booking.
+     * @return An Optional containing the number of bookings if found, otherwise an empty Optional.
+     * @throws DAOException If a database access error occurs.
+     */
+    public Optional<Integer> getTotalBookingsBySlotIdAndBookingDate(int slotId, LocalDate bookingDate) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_NUMBER_OF_BOOKINGS)) {
+            ps.setInt(1, slotId);
+            ps.setDate(2, Date.valueOf(bookingDate));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int bookings = rs.getInt(1);
+                    return Optional.of(bookings);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to retrieve total bookings for ID: " + slotId, e);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -277,11 +366,11 @@ public class CustomerDAO {
                 throw new MissingValueException("Booking date is missing from database record.");
             }
 
-            LocalTime bookingTime = null;
-            if (rs.getTime("bookingTime") != null) {
-                bookingTime = rs.getTime("bookingTime").toLocalTime();
+            LocalDateTime dateAndTimeOfBooking = null;
+            if (rs.getTime("dateAndTimeOfBooking") != null) {
+                dateAndTimeOfBooking = rs.getTimestamp("dateAndTimeOfBooking").toLocalDateTime();
             } else {
-                throw new MissingValueException("Booking time is missing from database record.");
+                throw new MissingValueException("Date and time of booking is missing from database record.");
             }
 
             return new Booking(
@@ -291,10 +380,31 @@ public class CustomerDAO {
                     rs.getInt("slotId"),
                     rs.getString("bookingStatus"),
                     bookingDate,
-                    bookingTime
+                    dateAndTimeOfBooking
             );
         } catch (SQLException e) {
             throw new DAOException("Failed to map ResultSet to Booking object.", e);
+        }
+    }
+
+    /**
+     * Maps a ResultSet row to a Slot object.
+     * @param rs The ResultSet containing the slot data.
+     * @return A Slot object.
+     * @throws DAOException If a database access error occurs during mapping.
+     */
+    private Slot mapResultSetToSlot(ResultSet rs) throws SQLException {
+        try {
+            return new Slot(
+                    rs.getInt("slotId"),
+                    rs.getInt("gymId"),
+                    rs.getTime("startTime").toLocalTime(),
+                    rs.getTime("endTime").toLocalTime(),
+                    rs.getInt("capacity"),
+                    rs.getInt("bookedCount")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to Slot object.", e);
         }
     }
 }

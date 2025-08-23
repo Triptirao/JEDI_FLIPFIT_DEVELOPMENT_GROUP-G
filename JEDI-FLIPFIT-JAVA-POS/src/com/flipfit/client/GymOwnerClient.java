@@ -60,7 +60,7 @@ public class GymOwnerClient {
             System.out.println("----------------------------------------");
             System.out.println("1. Add a new Gym Centre");
             System.out.println("2. View Gym Details");
-            System.out.println("3. View Customers");
+            System.out.println("3. View Bookings");
             System.out.println("4. Edit Details");
             System.out.println("5. Exit");
             System.out.print("Enter your choice: ");
@@ -84,7 +84,7 @@ public class GymOwnerClient {
                     viewGymDetails();
                     break;
                 case 3:
-                    viewCustomers();
+                    viewBookings();
                     break;
                 case 4:
                     editDetails();
@@ -162,15 +162,26 @@ public class GymOwnerClient {
     }
 
     /**
-     * Calls the service layer to display the list of customers.
+     * Calls the service layer to display the list of bookings.
      */
-    //TODO : change to view booking
-    private void viewCustomers() {
-        System.out.println("Viewing customers...");
+    //TODO : change to view booking (Done)
+    private void viewBookings() {
+        System.out.println("Enter gym ID to view Bookings: ");
         try {
-            gymOwnerService.viewCustomers();
+            int gymId = in.nextInt();
+            in.nextLine();
+            if(gymOwnerService.validateGymId(loggedInOwnerId, gymId)){
+                System.out.println("Viewing bookings...");
+                gymOwnerService.viewBookings(gymId);
+            }
+            else{
+                System.out.println("Invalid gym ID. Please try again.");
+            }
+        } catch(InputMismatchException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            in.nextLine();
         } catch (Exception e) {
-            System.out.println("An error occurred while viewing customers: " + e.getMessage());
+            System.out.println("An error occurred while viewing bookings: " + e.getMessage());
         }
     }
 

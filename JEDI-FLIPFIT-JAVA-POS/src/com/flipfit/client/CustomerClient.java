@@ -100,7 +100,7 @@ public class CustomerClient {
      * Prompts the user for details to book a slot and calls the
      * business service to perform the booking.
      */
-    //TODO : proper implementation check with payment
+    //TODO : proper implementation check with payment (Done)
     private void bookaSlot() {
         System.out.println("--- Book a Slot ---");
         try {
@@ -118,7 +118,7 @@ public class CustomerClient {
             // Use the existing service object to book the slot.
             customerService.bookSlot(loggedInCustomerId, gymId, slotId, bookingDate);
         } catch (InputMismatchException e) {
-            System.out.println("Invalid input. Please enter a number for ID.");
+            System.out.println("Invalid input. Please enter a number for gym ID and slot ID.");
             in.nextLine(); // Clear the invalid input
         } catch (DateTimeParseException e) {
             System.out.println("Invalid date format. Please use YYYY-MM-DD.");
@@ -130,7 +130,7 @@ public class CustomerClient {
     /**
      * Retrieves and displays the booked slots for the logged-in customer.
      */
-    // TODO : check
+    // TODO : check (Done)
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
         try {
@@ -145,7 +145,10 @@ public class CustomerClient {
                 for (Booking booking : bookings) {
                     System.out.println("Booking ID: " + booking.getBookingId() +
                             ", Slot ID: " + booking.getSlotId() +
-                            ", Gym ID: " + booking.getGymId());
+                            ", Gym ID: " + booking.getGymId() +
+                            ", Booking Status: " + booking.getBookingStatus() +
+                            ", Booking Date: " + booking.getBookingDate().toString() +
+                            ", Date and Time of Booking: " + booking.getDateAndTimeOfBooking().toString());
                 }
             }
         } catch (Exception e) {

@@ -1,16 +1,16 @@
 package com.flipfit.business;
 
-import com.flipfit.bean.Booking;
-import com.flipfit.bean.Customer;
-import com.flipfit.bean.GymCentre;
-import com.flipfit.bean.User;
+import com.flipfit.bean.*;
 import com.flipfit.dao.*;
 import com.flipfit.exception.AuthenticationException;
+import com.flipfit.exception.DAOException;
 import com.flipfit.exception.MissingValueException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -65,14 +65,55 @@ public class CustomerService implements customerInterface {
      */
     @Override
     public void bookSlot(int customerId, int gymId, int slotId, LocalDate bookingDate) {
-        System.out.println("Booking your slot...");
+        System.out.println("New slot booking request received...");
 
         // Throw MissingValueException for null bookingDate
         if (bookingDate == null) {
             throw new MissingValueException("Booking date cannot be null.");
         }
 
-        System.out.println("GymId: " + gymId + ", SlotId: " + slotId + ", BookingDate: " + bookingDate + "customerid: " + customerId);
+        Optional<GymCentre> gymCentreOptional = customerDao.getGymById(gymId);
+        Optional<Slot> slotOptional = customerDao.getSlotById(slotId);
+        int balance = 0;
+        int bookings = 0;
+
+        if (gymCentreOptional.isEmpty() || slotOptional.isEmpty()) {
+            System.out.println("Error: Gym or slot not found.");
+            return;
+        }
+
+        Optional<Integer> bookingsOptional = customerDao.getTotalBookingsBySlotIdAndBookingDate(slotId, bookingDate);
+
+        if (bookingsOptional.isPresent()) {
+            bookings = bookingsOptional.get();
+        }
+
+        try{
+            balance = retrieveBalance(customerId);
+        } catch(AuthenticationException e){
+            System.out.println("Error: " + e.getMessage());
+            return;
+        }
+
+        GymCentre gymCentre = gymCentreOptional.get();
+        Slot slot = slotOptional.get();
+
+        LocalDateTime slotDateTime = LocalDateTime.of(bookingDate, slot.getStartTime());
+
+        if (LocalDateTime.now().isAfter(slotDateTime)) {
+            System.out.println("The booking date and time have already passed. Please select a future slot.");
+            return;
+        }
+
+        if(balance < gymCentre.getCost()){
+            System.out.println("Insufficient balance for booking slot. Your balance: " + balance + ", Required amount: " + gymCentre.getCost() + ". Please add money to wallet.");
+            return;
+        }
+
+        if(bookings >= slot.getCapacity()){
+            System.out.println("This slot is already full for the the given date, please try booking some other slot or for some other date");
+            return;
+        }
 
         Booking newBooking = new Booking(
                 customerId,
@@ -80,11 +121,20 @@ public class CustomerService implements customerInterface {
                 slotId,
                 "BOOKED", // Default status
                 bookingDate, // Use the provided date
-                LocalTime.now()
+                LocalDateTime.now()
         );
 
-        customerDao.bookSlot(newBooking);
-        System.out.println("Slot booked successfully!");
+        try{
+            Optional<Integer> bookingIdOptional = customerDao.bookSlot(newBooking, gymCentre.getCost());
+            if (bookingIdOptional.isPresent()) {
+                System.out.println("Slot booked successfully with booking ID: " + bookingIdOptional.get());
+            } else {
+                System.out.println("Failed to book slot: No booking ID was generated.");
+            }
+        } catch(DAOException e){
+            System.out.println("Error: " + e.getMessage());
+        }
+
     }
 
     /**
