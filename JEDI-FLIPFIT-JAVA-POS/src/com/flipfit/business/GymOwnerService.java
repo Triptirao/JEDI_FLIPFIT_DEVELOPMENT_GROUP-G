@@ -119,8 +119,8 @@ public class GymOwnerService implements gymOwnerInterface {
         userOptional = userDao.getUserById(ownerId);
         gymOwnerOptional = gymOwnerDao.getGymOwnerById(ownerId);
 
-        if (!userOptional.isPresent() || !gymOwnerOptional.isPresent()) {
-            System.out.println("Error: User or Gym Owner not found.");
+        if (userOptional.isEmpty() || gymOwnerOptional.isEmpty()) {
+            System.out.println("Error: Gym Owner not found.");
             return;
         }
 
@@ -142,7 +142,7 @@ public class GymOwnerService implements gymOwnerInterface {
                 default: System.out.println("Invalid choice for update."); return;
             }
         } catch (NumberFormatException e) {
-            System.err.println("Invalid format for phone number or pincode. Please enter a valid number.");
+            System.err.println("Invalid format for phone number or pin code. Please enter a valid number.");
             return;
         }
 

@@ -5,10 +5,9 @@ import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.User;
 import com.flipfit.dao.*;
-import com.flipfit.exception.DuplicateEntryException;
-import com.flipfit.exception.MismatchinputException;
+import com.flipfit.exception.AuthenticationException;
 import com.flipfit.exception.MissingValueException;
-import java.sql.SQLException;
+
 import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -92,24 +91,30 @@ public class CustomerService implements customerInterface {
      * Processes a customer's payment and updates their payment details.
      *
      * @param customerId The ID of the customer making the payment.
-     * @param paymentType The type of payment being made.
-     * @param paymentInfo The details associated with the payment method.
+     * @param balance The balance to be added to wallet.
      */
     @Override
-    public void makePayments(int customerId, int paymentType, String paymentInfo) {
-        System.out.println("Processing payment of type: " + paymentType + " with account: " + paymentInfo);
+    public void makePayments(int customerId, int balance) {
 
-        // Throw MissingValueException if the customer is not found
-        Optional<Customer> optionalCustomer = customerDao.getCustomerById(customerId);
-        if (optionalCustomer.isEmpty()) {
-            throw new MissingValueException("Customer with ID " + customerId + " not found.");
+        customerDao.makePayment(customerId, balance);
+    }
+
+    /**
+     * Retrieve customer's balance based on his/her ID.
+     *
+     * @param customerId The customer's user ID.
+     * @return An integer representing balance if the customer exists.
+     * @throws AuthenticationException if the user ID is invalid.
+     */
+    @Override
+    public Integer retrieveBalance(int customerId) {
+        Optional<Integer> balanceOptional = customerDao.getBalanceById(customerId);
+
+        if (balanceOptional.isPresent()) {
+
+            return balanceOptional.get();
         }
-
-        Customer customer = optionalCustomer.get();
-        customer.setPaymentType(paymentType);
-        customer.setPaymentInfo(paymentInfo);
-
-        customerDao.updateCustomer(customer);
+        throw new AuthenticationException("Invalid customer ID.");
     }
 
     /**
@@ -124,48 +129,69 @@ public class CustomerService implements customerInterface {
         // Throw MissingValueException if the user is not found
         Optional<User> optionalUser = userDao.getUserById(userId);
         if (optionalUser.isEmpty()) {
-            throw new MissingValueException("User with ID " + userId + " not found.");
+            System.out.println("Error: Customer not found.");
+            return;
         }
 
         User user = optionalUser.get();
 
-        switch (choice) {
-            case 1: // Name
-                user.setFullName(newValue);
-                break;
-            case 2: // Email
-                user.setEmail(newValue);
-                break;
-            case 3: // Password
-                user.setPassword(newValue);
-                break;
-            case 4: // Phone Number
-                try {
-                    long newPhone = Long.parseLong(newValue);
-                    user.setUserPhone(newPhone);
-                } catch (NumberFormatException e) {
-                    // Throw MismatchinputException for invalid number format
-                    throw new MismatchinputException("Invalid phone number format. Please enter a valid number.", e);
-                }
-                break;
-            case 5: // City
-                user.setCity(newValue);
-                break;
-            case 6: // Pincode
-                try {
-                    int newPincode = Integer.parseInt(newValue);
-                    user.setPinCode(newPincode);
-                } catch (NumberFormatException e) {
-                    // Throw MismatchinputException for invalid pincode format
-                    throw new MismatchinputException("Invalid pin code format. Please enter a valid number.", e);
-                }
-                break;
-            default:
-                // Throw MismatchinputException for an invalid choice
-                throw new MismatchinputException("Invalid choice for update.");
+        // Update the correct field based on user choice
+        try {
+            switch (choice) {
+                case 1:
+                    user.setFullName(newValue);
+                    break;
+                case 2:
+                    user.setEmail(newValue);
+                    break;
+                case 3:
+                    user.setPassword(newValue);
+                    break;
+                case 4:
+                    user.setUserPhone(Long.parseLong(newValue));
+                    break;
+                case 5:
+                    user.setCity(newValue);
+                    break;
+                case 6:
+                    user.setPinCode(Integer.parseInt(newValue));
+                    break;
+                default:
+                    System.out.println("Invalid choice for update.");
+                    return;
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid format for phone number or pin code. Please enter a valid number.");
+            return;
         }
 
+        // Persist the changes to the database by calling the DAO
         userDao.updateUser(user);
+        System.out.println("Customer details updated successfully.");
+    }
+
+    /**
+     * Updates a specific detail for a customer.
+     *
+     * @param userId The ID of the user (customer) whose payment details are to be updated.
+     * @param paymentType Payment type to be updated.
+     * @param paymentInfo Payment info to be updated.
+     */
+    @Override
+    public void editPaymentDetails(int userId, int paymentType, String paymentInfo) {
+        // Throw MissingValueException if the user is not found
+        Optional<Customer> optionalCustomer = customerDao.getCustomerById(userId);
+        if (optionalCustomer.isEmpty()) {
+            System.out.println("Error: Customer not found.");
+            return;
+        }
+
+        Customer customer = optionalCustomer.get();
+
+        // Update the customer fields
+        customer.setPaymentType(paymentType);
+        customer.setPaymentInfo(paymentInfo);
+        customerDao.updateCustomerDetails(customer);
         System.out.println("Customer details updated successfully.");
     }
 }

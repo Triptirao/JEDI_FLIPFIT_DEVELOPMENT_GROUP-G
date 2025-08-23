@@ -88,7 +88,7 @@ public class AuthenticationService implements authenticationInterface {
 
         if (userId != -1) {
             // Create a new Customer object and link it to the new user ID
-            Customer newCustomer = new Customer(userId, paymentType, paymentInfo);
+            Customer newCustomer = new Customer(userId, paymentType, paymentInfo, 0);
             customerDao.addCustomer(newCustomer);
             System.out.println("Customer registration received for " + fullName);
         } else {

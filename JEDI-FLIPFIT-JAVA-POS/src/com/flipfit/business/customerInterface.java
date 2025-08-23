@@ -2,6 +2,7 @@ package com.flipfit.business;
 
 import com.flipfit.bean.Booking;
 import com.flipfit.bean.GymCentre;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -44,10 +45,16 @@ public interface customerInterface {
      * Processes a customer's payment and updates their payment details.
      *
      * @param customerId The ID of the customer making the payment.
-     * @param paymentType The type of payment being made.
-     * @param paymentInfo The details associated with the payment method.
+     * @param balance The balance to be added to wallet.
      */
-    void makePayments(int customerId, int paymentType, String paymentInfo);
+    void makePayments(int customerId, int balance);
+
+    /**
+     * Retrieve customer's balance based on his/her ID.
+     *
+     * @param customerId The customer's user ID.
+     */
+    Integer retrieveBalance(int customerId);
 
     /**
      * Updates a specific detail for a customer.
@@ -57,4 +64,13 @@ public interface customerInterface {
      * @param newValue The new value for the selected detail.
      */
     void editCustomerDetails(int userId, int choice, String newValue);
+
+    /**
+     * Updates a specific detail for a customer.
+     *
+     * @param userId The ID of the user (customer) whose payment details are to be updated.
+     * @param paymentType Payment type to be updated.
+     * @param paymentInfo Payment info to be updated.
+     */
+    void editPaymentDetails(int userId, int paymentType, String paymentInfo);
 }

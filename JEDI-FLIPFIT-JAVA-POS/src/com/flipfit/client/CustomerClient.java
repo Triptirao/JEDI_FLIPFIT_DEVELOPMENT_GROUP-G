@@ -2,6 +2,7 @@ package com.flipfit.client;
 
 import com.flipfit.bean.Booking;
 import com.flipfit.bean.GymCentre;
+import com.flipfit.bean.User;
 import com.flipfit.business.CustomerService;
 import com.flipfit.dao.*;
 import com.flipfit.exception.AccessDeniedException;
@@ -15,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class CustomerClient {
@@ -177,21 +179,33 @@ public class CustomerClient {
     /**
      * Prompts for payment details and calls the service to process the payment.
      */
-    //TODO : implement with wallet balance of customer and take gym cost as input by owner
+    //TODO : implement with wallet balance of customer and take gym cost as input by owner (Done)
     private void makePayments() {
         System.out.println("Initiating payment process...");
         try {
-            System.out.print("Enter payment type (1 for Credit Card, 2 for Debit Card, etc.): ");
-            int paymentType = in.nextInt();
-            in.nextLine(); // Consume newline
-            System.out.print("Enter account number: ");
-            String paymentInfo = in.nextLine();
+            Optional<Integer> balance = Optional.ofNullable(customerService.retrieveBalance(loggedInCustomerId));
 
-            // Pass the logged-in customer's ID and payment info to the service method.
-            customerService.makePayments(loggedInCustomerId, paymentType, paymentInfo);
-        } catch (InputMismatchException e) {
-            System.out.println("Invalid input for payment type. Please enter a number.");
-            in.nextLine();
+            if (balance.isPresent()) {
+                int balanceData = balance.get();
+                System.out.println("Current wallet balance: " + balanceData);
+
+                int newBalance = 0;
+                try {
+                    System.out.println("Enter amount to add to wallet: ");
+                    newBalance = in.nextInt();
+                    in.nextLine(); // Consume newline
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid amount. Please enter a number.");
+                    in.nextLine(); // Clear the invalid input
+                    return;
+                }
+                customerService.makePayments(loggedInCustomerId, newBalance);
+                System.out.println("Payment successful, new wallet balance: " + (balanceData + newBalance));
+            } else {
+                System.out.println("Login failed. Invalid credentials.");
+            }
+        } catch (AuthenticationException e) {
+            System.out.println("Customer ID not correct: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("An error occurred during payment: " + e.getMessage());
         }
@@ -200,7 +214,7 @@ public class CustomerClient {
     /**
      * Provides a sub-menu for the customer to edit their personal details.
      */
-    // TODO : check
+    // TODO : check, update code to edit payment details as well (Done)
     private void editDetails() {
         boolean continueEditing = true;
         while (continueEditing) {
@@ -209,9 +223,12 @@ public class CustomerClient {
             System.out.println("2. Change Email");
             System.out.println("3. Change Password");
             System.out.println("4. Change Phone Number");
-            System.out.println("5. Back to main menu");
+            System.out.println("5. Change City");
+            System.out.println("6. Change Pin Code");
+            System.out.println("7. Change Payment Details");
+            System.out.println("8. Back to main menu");
             System.out.print("Enter your choice: ");
-            int editChoice;
+            int editChoice = 0;
             try {
                 editChoice = in.nextInt();
                 in.nextLine(); // Consume newline
@@ -221,44 +238,44 @@ public class CustomerClient {
                 continue;
             }
 
-            String newValue;
-            try {
-                switch (editChoice) {
-                    case 1:
-                        System.out.print("Enter new name: ");
-                        newValue = in.nextLine();
-                        // Call the service method to update the customer's name.
-                        customerService.editCustomerDetails(loggedInCustomerId, 1, newValue);
-                        break;
-                    case 2:
-                        System.out.print("Enter new email: ");
-                        newValue = in.nextLine();
-                        // Call the service method to update the customer's email.
-                        customerService.editCustomerDetails(loggedInCustomerId, 2, newValue);
-                        break;
-                    case 3:
-                        System.out.print("Enter new password: ");
-                        newValue = in.nextLine();
-                        // Call the service method to update the customer's password.
-                        customerService.editCustomerDetails(loggedInCustomerId, 3, newValue);
-                        break;
-                    case 4:
-                        System.out.print("Enter new phone number: ");
-                        newValue = in.nextLine();
-                        // Call the service method to update the customer's phone number.
-                        customerService.editCustomerDetails(loggedInCustomerId, 4, newValue);
-                        break;
-                    case 5:
-                        // Exit the editing loop and return to the main customer menu.
-                        continueEditing = false;
-                        break;
-                    default:
-                        throw new MismatchinputException("Invalid choice. Please try again.");
+            if (editChoice == 8) {
+                continueEditing = false;
+                break;
+            }
+
+            if(editChoice == 7){
+                System.out.print("Enter new payment type (1 for Card, 2 for UPI): ");
+                String paymentType = in.nextLine();
+                while(!paymentType.equals("1") && !paymentType.equals("2")) {
+                    System.out.println("Invalid payment type. Please enter valid option");
+                    System.out.print("Enter new payment type (1 for Card, 2 for UPI): ");
+                    paymentType = in.nextLine();
                 }
-            } catch (MismatchinputException e) {
-                System.out.println("Error: " + e.getMessage());
-            } catch (Exception e) {
-                System.out.println("An unexpected error occurred: " + e.getMessage());
+
+                System.out.print("Enter new payment info (Card number or UPI ID): ");
+                String paymentInfo = in.nextLine();
+
+                try {
+                    // Call the service method to update the customer's details based on their choice.
+                    customerService.editPaymentDetails(loggedInCustomerId, Integer.parseInt(paymentType), paymentInfo);
+                } catch (IndexOutOfBoundsException | MismatchinputException e) {
+                    System.out.println("Error: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("An unexpected error occurred: " + e.getMessage());
+                }
+            }
+            else{
+                System.out.print("Enter new value: ");
+                String newValue = in.nextLine();
+
+                try {
+                    // Call the service method to update the customer's details based on their choice.
+                    customerService.editCustomerDetails(loggedInCustomerId, editChoice, newValue);
+                } catch (IndexOutOfBoundsException | MismatchinputException e) {
+                    System.out.println("Error: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("An unexpected error occurred: " + e.getMessage());
+                }
             }
         }
     }

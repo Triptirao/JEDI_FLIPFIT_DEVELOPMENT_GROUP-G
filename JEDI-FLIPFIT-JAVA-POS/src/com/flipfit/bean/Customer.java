@@ -24,17 +24,21 @@ public class Customer {
      */
     private String paymentInfo;
 
+    private int balance;
+
     /**
      * Constructs a new Customer object for a newly registered customer.
      *
      * @param userId The unique ID of the user.
      * @param paymentType The type of payment method.
      * @param paymentInfo The details of the payment method.
+     * @param balance The wallet balance of customer.
      */
-    public Customer(int userId, int paymentType, String paymentInfo) {
+    public Customer(int userId, int paymentType, String paymentInfo, int balance) {
         this.userId = userId;
         this.paymentType = paymentType;
         this.paymentInfo = paymentInfo;
+        this.balance = balance;
     }
 
     /**
@@ -89,5 +93,23 @@ public class Customer {
      */
     public void setPaymentInfo(String paymentInfo) {
         this.paymentInfo = paymentInfo;
+    }
+
+    /**
+     * Retrieves the wallet balance.
+     *
+     * @return The balance information.
+     */
+    public int getBalance() {
+        return balance;
+    }
+
+    /**
+     * Sets the wallet balance.
+     *
+     * @param balance The new wallet balance of customer.
+     */
+    public void setBalance(int balance) {
+        this.balance = balance;
     }
 }
