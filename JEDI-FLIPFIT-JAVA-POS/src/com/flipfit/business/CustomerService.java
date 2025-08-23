@@ -211,7 +211,7 @@ public class CustomerService implements customerInterface {
                     return;
             }
         } catch (NumberFormatException e) {
-            System.err.println("Invalid format for phone number or pin code. Please enter a valid number.");
+            System.out.println("Invalid format for phone number or pin code. Please enter a valid number.");
             return;
         }
 

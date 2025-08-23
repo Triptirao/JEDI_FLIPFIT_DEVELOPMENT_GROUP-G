@@ -105,15 +105,6 @@ public class GymOwnerService implements gymOwnerInterface {
     }
 
     /**
-     * Retrieves and displays the payment history for the gym owner.
-     */
-    @Override
-    public void viewPayments() {
-        System.out.println("Fetching payment history...");
-        System.out.println("No payments found.");
-    }
-
-    /**
      * Updates a specific detail for the gym owner.
      * @param ownerId The ID of the gym owner whose details are to be updated.
      * @param choice An integer representing the detail to be updated (e.g., 1 for name, 2 for email).
@@ -150,7 +141,7 @@ public class GymOwnerService implements gymOwnerInterface {
                 default: System.out.println("Invalid choice for update."); return;
             }
         } catch (NumberFormatException e) {
-            System.err.println("Invalid format for phone number or pin code. Please enter a valid number.");
+            System.out.println("Invalid format for phone number or pin code. Please enter a valid number.");
             return;
         }
 

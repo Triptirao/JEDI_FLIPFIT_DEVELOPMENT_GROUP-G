@@ -40,11 +40,6 @@ public interface gymOwnerInterface {
     boolean validateGymId(int ownerId, int gymId);
 
     /**
-     * Retrieves and displays the payment history for the gym owner.
-     */
-    void viewPayments();
-
-    /**
      * Updates a specific detail for the gym owner.
      * @param ownerId The ID of the gym owner whose details are to be updated.
      * @param choice An integer representing the detail to be updated (e.g., 1 for name, 2 for email).

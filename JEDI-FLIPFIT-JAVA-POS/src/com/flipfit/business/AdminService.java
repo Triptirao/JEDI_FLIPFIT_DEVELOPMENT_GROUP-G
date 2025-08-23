@@ -1,5 +1,6 @@
 package com.flipfit.business;
 
+import com.flipfit.bean.Customer;
 import com.flipfit.bean.GymCentre;
 import com.flipfit.bean.GymOwner;
 import com.flipfit.bean.User;
@@ -25,11 +26,13 @@ public class AdminService implements adminInterface {
     private static final Scanner in = new Scanner(System.in);
     private final AdminDAO adminDao;
     private final UserDAO userDao;
+    private final CustomerDAO customerDao;
     private final GymOwnerDAO gymOwnerDao;
 
-    public AdminService(AdminDAO adminDao, UserDAO userDao, CustomerDAO customerDAO, GymOwnerDAO gymOwnerDao) {
+    public AdminService(AdminDAO adminDao, UserDAO userDao, CustomerDAO customerDao, GymOwnerDAO gymOwnerDao) {
         this.adminDao = adminDao;
         this.userDao = userDao;
+        this.customerDao = customerDao;
         this.gymOwnerDao = gymOwnerDao;
     }
 
@@ -191,12 +194,25 @@ public class AdminService implements adminInterface {
      * Deletes a user from the system by their ID.
      * @param userId The ID of the user to delete.
      */
-    //TODO : check after implementing all TODOs
     @Override
     public void deleteUserById(int userId) throws UnableToDeleteUserException {
         try {
-            adminDao.deleteUser(userId);
-            System.out.println("User with ID: " + userId + " deleted successfully.");
+            Optional<User> userOptional = userDao.getUserById(userId);
+            if(userOptional.isEmpty()) {
+                System.out.println("No user found with id: " + userId);
+                return;
+            }
+            Optional<Customer> optionalCustomer = customerDao.getCustomerById(userId);
+            Optional<GymOwner> optionalGymOwner = gymOwnerDao.getGymOwnerById(userId);
+            if(optionalCustomer.isPresent()) {
+                adminDao.deleteCustomer(userId);
+            }
+            else if(optionalGymOwner.isPresent()) {
+                adminDao.deleteOwner(userId);
+            }
+            else{
+                System.out.println("No user found with id: " + userId);
+            }
         } catch (Exception e) {
             throw new UnableToDeleteUserException("Failed to delete user with ID " + userId + ". " + e.getMessage());
         }
@@ -206,12 +222,15 @@ public class AdminService implements adminInterface {
      * Deletes a gym from the system by its ID.
      * @param gymId The ID of the gym to delete.
      */
-    //TODO: delete slots from slot table
     @Override
     public void deleteGymById(int gymId) throws MismatchinputException {
         try {
+            Optional<GymCentre> gymCentreOptional = gymOwnerDao.getGymById(gymId);
+            if(gymCentreOptional.isEmpty()) {
+                System.out.println("No gym found with id: " + gymId);
+                return;
+            }
             adminDao.deleteGym(gymId);
-            System.out.println("Gym with ID: " + gymId + " deleted successfully.");
         } catch (Exception e) {
             throw new MismatchinputException("Failed to delete gym with ID " + gymId + ". " + e.getMessage());
         }

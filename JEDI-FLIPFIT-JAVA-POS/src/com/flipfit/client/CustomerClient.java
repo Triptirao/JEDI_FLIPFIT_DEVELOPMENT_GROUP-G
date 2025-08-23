@@ -100,7 +100,6 @@ public class CustomerClient {
      * Prompts the user for details to book a slot and calls the
      * business service to perform the booking.
      */
-    //TODO : proper implementation check with payment (Done)
     private void bookaSlot() {
         System.out.println("--- Book a Slot ---");
         try {
@@ -130,7 +129,6 @@ public class CustomerClient {
     /**
      * Retrieves and displays the booked slots for the logged-in customer.
      */
-    // TODO : check (Done)
     private void viewBookedSlots() {
         System.out.println("Viewing your booked slots...");
         try {
@@ -182,7 +180,6 @@ public class CustomerClient {
     /**
      * Prompts for payment details and calls the service to process the payment.
      */
-    //TODO : implement with wallet balance of customer and take gym cost as input by owner (Done)
     private void makePayments() {
         System.out.println("Initiating payment process...");
         try {
@@ -217,7 +214,6 @@ public class CustomerClient {
     /**
      * Provides a sub-menu for the customer to edit their personal details.
      */
-    // TODO : check, update code to edit payment details as well (Done)
     private void editDetails() {
         boolean continueEditing = true;
         while (continueEditing) {

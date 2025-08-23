@@ -108,7 +108,6 @@ public class AdminClient {
                         try {
                             int userId = Integer.parseInt(in.nextLine());
                             adminService.deleteUserById(userId);
-                            System.out.println("User deleted successfully.");
                         } catch (NumberFormatException e) {
                             System.out.println("Error: Invalid user ID format. Please enter a number.");
                         } catch (MismatchinputException e) {
@@ -122,7 +121,6 @@ public class AdminClient {
                         try {
                             int gymIdToDelete = Integer.parseInt(in.nextLine());
                             adminService.deleteGymById(gymIdToDelete);
-                            System.out.println("Gym deleted successfully.");
                         } catch (NumberFormatException e) {
                             System.out.println("Error: Invalid gym ID format. Please enter a number.");
                         } catch (MismatchinputException e) {

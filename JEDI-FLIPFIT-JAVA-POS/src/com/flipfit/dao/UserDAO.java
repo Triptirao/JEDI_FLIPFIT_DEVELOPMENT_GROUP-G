@@ -23,10 +23,8 @@ public class UserDAO {
 
     private static final String SELECT_ALL_CUSTOMERS = "SELECT u.* FROM User u JOIN Customer c ON u.userId = c.customerId";
     private static final String INSERT_USER = "INSERT INTO `User` (fullName, email, password, userPhone, city, pinCode) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String SELECT_ALL_USERS = "SELECT * FROM `User`";
     private static final String SELECT_USER_BY_ID = "SELECT * FROM `User` WHERE userId = ?";
     private static final String SELECT_USER_BY_EMAIL_PASSWORD = "SELECT * FROM `User` WHERE email = ? AND password = ?";
-    private static final String DELETE_USER = "DELETE FROM `User` WHERE userId = ?";
     private static final String UPDATE_USER = "UPDATE `User` SET fullName = ?, email = ?, password = ?, userPhone = ?, city = ?, pinCode = ? WHERE userId = ?";
     private static final String SELECT_ALL_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = TRUE";
 
@@ -85,23 +83,23 @@ public class UserDAO {
     }
 
     /**
-     * Retrieves a list of all users from the database.
+     * Retrieves a list of all users who are approved gym owners.
      *
-     * @return A list of all User objects.
+     * @return A list of User objects representing all approved gym owners.
      * @throws DAOException if a database access error occurs.
      */
-    public List<User> getAllUsers() {
-        List<User> userList = new ArrayList<>();
+    public List<User> getAllGymOwners() {
+        List<User> gymOwners = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SELECT_ALL_USERS);
+             PreparedStatement ps = con.prepareStatement(SELECT_ALL_GYM_OWNERS);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                userList.add(mapResultSetToUser(rs));
+                gymOwners.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
-            throw new DAOException("Failed to retrieve all users.", e);
+            throw new DAOException("Failed to retrieve all gym owners.", e);
         }
-        return userList;
+        return gymOwners;
     }
 
     /**
@@ -151,25 +149,6 @@ public class UserDAO {
     }
 
     /**
-     * Deletes a user record from the database.
-     *
-     * @param userId The ID of the user to delete.
-     * @throws DAOException if the user is not found or a database access error occurs.
-     */
-    public void deleteUser(int userId) {
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
-            ps.setInt(1, userId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new DAOException("Could not delete user. User with ID " + userId + " not found.");
-            }
-        } catch (SQLException e) {
-            throw new DAOException("Failed to delete user with ID: " + userId, e);
-        }
-    }
-
-    /**
      * Updates an existing user record in the database.
      *
      * @param user The User object with the updated details.
@@ -196,26 +175,6 @@ public class UserDAO {
             }
             throw new DAOException("Failed to update user details for ID: " + user.getUserId(), e);
         }
-    }
-
-    /**
-     * Retrieves a list of all users who are approved gym owners.
-     *
-     * @return A list of User objects representing all approved gym owners.
-     * @throws DAOException if a database access error occurs.
-     */
-    public List<User> getAllGymOwners() {
-        List<User> gymOwners = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SELECT_ALL_GYM_OWNERS);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                gymOwners.add(mapResultSetToUser(rs));
-            }
-        } catch (SQLException e) {
-            throw new DAOException("Failed to retrieve all gym owners.", e);
-        }
-        return gymOwners;
     }
 
     /**
