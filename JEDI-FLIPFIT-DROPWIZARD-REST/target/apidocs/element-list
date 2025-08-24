@@ -1,0 +1,7 @@
+com.dropwizard
+com.flipfit.bean
+com.flipfit.business
+com.flipfit.dao
+com.flipfit.exception
+com.flipfit.resources
+com.flipfit.utils

@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.dropwizard"},{"l":"com.flipfit.bean"},{"l":"com.flipfit.business"},{"l":"com.flipfit.dao"},{"l":"com.flipfit.exception"},{"l":"com.flipfit.resources"},{"l":"com.flipfit.utils"}];updateSearchResults();
