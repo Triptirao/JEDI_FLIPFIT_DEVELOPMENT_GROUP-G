@@ -11,7 +11,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object (DAO) class for managing Admin-level operations in the FlipFit application.
@@ -27,16 +29,23 @@ public class AdminDAO {
 
     // SQL queries for GymCentre operations
     private static final String SELECT_PENDING_GYMS = "SELECT * FROM GymCentre WHERE approved = FALSE";
-    private static final String SELECT_ALL_GYMS = "SELECT * FROM GymCentre";
+    private static final String SELECT_ALL_GYMS = "SELECT * FROM GymCentre WHERE approved = TRUE";
     private static final String APPROVE_GYM = "UPDATE GymCentre SET approved = TRUE WHERE centreId = ?";
     private static final String DELETE_GYM = "DELETE FROM GymCentre WHERE centreId = ?";
     private static final String APPROVE_GYM_OWNER = "UPDATE `GymOwner` SET isApproved = TRUE WHERE ownerId = (SELECT userId FROM `User` WHERE email = ?)";
     private static final String DELETE_BOOKINGS_BY_USER_ID = "DELETE FROM Booking WHERE customerId = ?";
     private static final String DELETE_CUSTOMER_BY_USER_ID = "DELETE FROM Customer WHERE customerId = ?";
-    private static final String DELETE_GYMS_BY_OWNER_ID = "DELETE FROM GymCentre WHERE ownerId = ?";
     private static final String DELETE_GYM_OWNER_BY_USER_ID = "DELETE FROM GymOwner WHERE ownerId = ?";
-    private static final String DELETE_ADMIN_BY_USER_ID = "DELETE FROM Admin WHERE adminId = ?";
     private static final String DELETE_USER = "DELETE FROM User WHERE userId = ?";
+    private static final String SELECT_FUTURE_BOOKINGS = "SELECT b.slotId AS slotId, COUNT(b.bookingId) AS total_future_bookings FROM Booking AS b JOIN Slot AS s ON b.slotId = s.slotId WHERE b.customerId = ? AND CONCAT(b.bookingDate, ' ', s.startTime) > NOW() AND b.bookingStatus = 'BOOKED' GROUP BY b.slotId";
+    private static final String UPDATE_BOOKED_COUNT = "UPDATE Slot SET bookedCount = bookedCount - ? WHERE slotId = ?";
+    private static final String SELECT_GYMS_BY_OWNER_ID = "SELECT * FROM GymCentre WHERE ownerId = ?";
+    private static final String SELECT_BALANCE_AMOUNT = "SELECT SUM(gc.cost) AS balance_amount FROM Booking AS b JOIN Slot AS s ON b.slotId = s.slotId JOIN GymCentre AS gc ON s.gymId = gc.centreId WHERE b.customerId = ? AND CONCAT(b.bookingDate, ' ', s.startTime) > NOW() AND b.bookingStatus = 'BOOKED'";
+    private static final String UPDATE_CUSTOMER_BALANCE = "UPDATE Customer SET balance = balance + ? WHERE customerId = ?";
+    private static final String DELETE_BOOKINGS_BY_GYM_ID = "DELETE FROM Booking WHERE gymId = ?";
+    private static final String DELETE_SLOTS_BY_GYM_ID = "DELETE FROM Slot WHERE gymId = ?";
+    private static final String SELECT_REFUND_BALANCE = "SELECT b.customerId AS customerId, COUNT(b.bookingId) AS total_future_bookings, gc.cost AS cost FROM Booking AS b JOIN Slot AS s ON b.slotId = s.slotId JOIN GymCentre AS gc ON b.gymId = gc.centreId WHERE b.gymId = ? AND b.bookingStatus = 'BOOKED' AND CONCAT(b.bookingDate, ' ', s.startTime) > NOW() GROUP BY b.customerId";
+    private static final String SELECT_PENDING_GYM_OWNERS = "SELECT u.* FROM User u JOIN GymOwner go ON u.userId = go.ownerId WHERE go.isApproved = FALSE";
 
     /**
      * Constructs an AdminDAO with necessary DAO dependencies.
@@ -88,12 +97,23 @@ public class AdminDAO {
     }
 
     /**
-     * Retrieves a list of gym owners who are awaiting admin approval.
-     * This method delegates the call to the GymOwnerDAO.
-     * @return A list of User objects representing pending gym owners.
+     * Retrieves a list of gym owners who are awaiting administrative approval.
+     *
+     * @return A {@link List} of {@code User} objects representing the pending gym owners.
+     * @throws DAOException if a database access error occurs.
      */
     public List<User> getPendingGymOwnerRequests() {
-        return gymOwnerDao.getPendingGymOwners();
+        List<User> pendingOwners = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SELECT_PENDING_GYM_OWNERS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                pendingOwners.add(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Failed to retrieve pending gym owners.", e);
+        }
+        return pendingOwners;
     }
 
     /**
@@ -151,15 +171,6 @@ public class AdminDAO {
     }
 
     /**
-     * Retrieves a list of all registered users.
-     * This method delegates the call to the UserDAO.
-     * @return A list of all User objects.
-     */
-    public List<User> getAllUsers() {
-        return userDao.getAllUsers();
-    }
-
-    /**
      * Retrieves a list of all registered customers.
      * This method delegates the call to the UserDAO.
      * @return A list of all User objects representing customers.
@@ -169,65 +180,204 @@ public class AdminDAO {
     }
 
     /**
-     * Deletes a user and all their associated data in a single transaction.
+     * Deletes a customer and all their associated data in a single transaction.
      * This method ensures data integrity by deleting dependent records first.
-     * @param userId The unique identifier of the user to be deleted.
-     * @throws UnableToDeleteUserException If the user cannot be deleted, or if the transaction fails.
+     * @param customerId The unique identifier of the customer to be deleted.
      * @throws DAOException If the connection cannot be closed.
      */
-    public void deleteUser(int userId) {
+    public void deleteCustomer(int customerId) {
         Connection con = null;
-        try {
+
+        try{
             con = DBConnection.getConnection();
-            con.setAutoCommit(false); // Start transaction
+            con.setAutoCommit(false);
 
-            try (PreparedStatement ps1 = con.prepareStatement(DELETE_BOOKINGS_BY_USER_ID)) {
-                ps1.setInt(1, userId);
-                ps1.executeUpdate();
-            }
-            try (PreparedStatement ps2 = con.prepareStatement(DELETE_CUSTOMER_BY_USER_ID)) {
-                ps2.setInt(1, userId);
-                ps2.executeUpdate();
-            }
-            try (PreparedStatement ps3 = con.prepareStatement(DELETE_GYMS_BY_OWNER_ID)) {
-                ps3.setInt(1, userId);
-                ps3.executeUpdate();
-            }
-            try (PreparedStatement ps4 = con.prepareStatement(DELETE_GYM_OWNER_BY_USER_ID)) {
-                ps4.setInt(1, userId);
-                ps4.executeUpdate();
-            }
-            try (PreparedStatement ps5 = con.prepareStatement(DELETE_ADMIN_BY_USER_ID)) {
-                ps5.setInt(1, userId);
-                ps5.executeUpdate();
-            }
+            Map<Integer, Integer> futureBookings = new HashMap<>();
 
-            try (PreparedStatement ps6 = con.prepareStatement(DELETE_USER)) {
-                ps6.setInt(1, userId);
-                int rowsAffected = ps6.executeUpdate();
-                if (rowsAffected == 0) {
-                    throw new UnableToDeleteUserException("User with ID " + userId + " not found.");
+            try (PreparedStatement ps = con.prepareStatement(SELECT_FUTURE_BOOKINGS)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int slotId = rs.getInt("slotId");
+                        int bookingCount = rs.getInt("total_future_bookings");
+                        futureBookings.put(slotId, bookingCount);
+                    }
                 }
             }
 
-            con.commit(); // Commit the transaction
+            try (PreparedStatement ps = con.prepareStatement(UPDATE_BOOKED_COUNT)) {
+                for (Map.Entry<Integer, Integer> entry : futureBookings.entrySet()) {
+                    ps.setInt(1, entry.getValue()); // Decrement by the booking count
+                    ps.setInt(2, entry.getKey());   // The slot ID to update
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+
+            int balanceAmount = 0;
+
+            try (PreparedStatement ps = con.prepareStatement(SELECT_BALANCE_AMOUNT)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        balanceAmount = rs.getInt("balance_amount");
+                    }
+                }
+            }
+
+            try  (PreparedStatement ps = con.prepareStatement(UPDATE_CUSTOMER_BALANCE)) {
+                ps.setInt(1, balanceAmount);
+                ps.setInt(2, customerId);
+                ps.executeBatch();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(DELETE_BOOKINGS_BY_USER_ID)) {
+                ps.setInt(1, customerId);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(DELETE_CUSTOMER_BY_USER_ID)) {
+                ps.setInt(1, customerId);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
+                ps.setInt(1, customerId);
+                ps.executeUpdate();
+            }
+
+            con.commit();
+            System.out.println("User with ID: " + customerId + " deleted successfully.");
         } catch (SQLException e) {
-            try {
-                if (con != null) {
-                    con.rollback();
-                }
-            } catch (SQLException ex) {
-                throw new UnableToDeleteUserException("Transaction rollback failed.", ex);
-            }
-            throw new UnableToDeleteUserException("Failed to delete user with ID: " + userId, e);
-        } finally {
             if (con != null) {
                 try {
-                    con.close();
-                } catch (SQLException e) {
-                    throw new DAOException("Failed to close database connection.", e);
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.out.println("Failed to rollback transaction: " + rollbackEx.getMessage());
                 }
             }
+            throw new DAOException("Transaction failed: Customer deletion was rolled back.", e);
+        } finally {
+            // Ensure the connection is closed and auto-commit is reset
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException closeEx) {
+                    System.out.println("Failed to close connection: " + closeEx.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Deletes a gym owner and all their associated data in a single transaction.
+     * This method ensures data integrity by deleting dependent records first.
+     * @param ownerId The unique identifier of the owner to be deleted.
+     * @throws DAOException If the connection cannot be closed.
+     */
+    public void deleteOwner(int ownerId) {
+        Connection con = null;
+
+        try{
+            con = DBConnection.getConnection();
+            con.setAutoCommit(false);
+
+            List<Integer> gymIds = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement(SELECT_GYMS_BY_OWNER_ID)) {
+                ps.setInt(1, ownerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        gymIds.add(rs.getInt("centreId"));
+                    }
+                }
+            }
+
+            if (!gymIds.isEmpty()) {
+                for (Integer gymId : gymIds) {
+                    // Call the deleteGym method for each gym ID.
+                    deleteGymById(con, gymId);
+                }
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(DELETE_GYM_OWNER_BY_USER_ID)) {
+                ps.setInt(1, ownerId);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(DELETE_USER)) {
+                ps.setInt(1, ownerId);
+                ps.executeUpdate();
+            }
+
+            con.commit();
+            System.out.println("User with ID: " + ownerId + " deleted successfully.");
+        } catch (SQLException e) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.out.println("Failed to rollback transaction: " + rollbackEx.getMessage());
+                }
+            }
+            throw new DAOException("Transaction failed: Gym Owner deletion was rolled back.", e);
+        } finally {
+            // Ensure the connection is closed and auto-commit is reset
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException closeEx) {
+                    System.out.println("Failed to close connection: " + closeEx.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Deletes a gym center from the database.
+     * @param con The database connection object.
+     * @param gymId The unique identifier of the gym to be deleted.
+     * @throws DAOException If the gym cannot be deleted, or if the gymId does not exist.
+     */
+    public void deleteGymById(Connection con, int gymId) throws SQLException {
+
+        Map<Integer, Integer> refundBalance = new HashMap<>();
+
+        try (PreparedStatement ps = con.prepareStatement(SELECT_REFUND_BALANCE)) {
+            ps.setInt(1, gymId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int customerId = rs.getInt("customerId");
+                    int bookingCount = rs.getInt("total_future_bookings");
+                    int cost = rs.getInt("cost");
+                    refundBalance.put(customerId, bookingCount*cost);
+                }
+            }
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(UPDATE_CUSTOMER_BALANCE)) {
+            for (Map.Entry<Integer, Integer> entry : refundBalance.entrySet()) {
+                ps.setInt(1, entry.getValue());
+                ps.setInt(2, entry.getKey());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(DELETE_BOOKINGS_BY_GYM_ID)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(DELETE_SLOTS_BY_GYM_ID)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(DELETE_GYM)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
         }
     }
 
@@ -237,15 +387,34 @@ public class AdminDAO {
      * @throws DAOException If the gym cannot be deleted, or if the gymId does not exist.
      */
     public void deleteGym(int gymId) {
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(DELETE_GYM)) {
-            ps.setInt(1, gymId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new DAOException("Could not delete gym. Gym with ID " + gymId + " not found.");
-            }
+        Connection con = null;
+
+        try {
+            con = DBConnection.getConnection();
+            con.setAutoCommit(false);
+            deleteGymById(con, gymId);
+
+            con.commit();
+            System.out.println("Gym with ID: " + gymId + " deleted successfully.");
         } catch (SQLException e) {
-            throw new DAOException("Failed to delete gym with ID: " + gymId, e);
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    System.out.println("Failed to rollback transaction: " + rollbackEx.getMessage());
+                }
+            }
+            throw new DAOException("Transaction failed: Gym deletion was rolled back.", e);
+        } finally {
+            // Ensure the connection is closed and auto-commit is reset
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException closeEx) {
+                    System.out.println("Failed to close connection: " + closeEx.getMessage());
+                }
+            }
         }
     }
 
@@ -272,6 +441,30 @@ public class AdminDAO {
             );
         } catch (SQLException e) {
             throw new DAOException("Failed to map ResultSet to GymCentre object.", e);
+        }
+    }
+
+    /**
+     * Helper method to map a {@link ResultSet} row to a {@code User} object.
+     *
+     * @param rs The {@link ResultSet} containing user data.
+     * @return A new {@code User} object.
+     * @throws SQLException if a database access error occurs.
+     * @throws DAOException if the mapping fails.
+     */
+    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+        try {
+            return new User(
+                    rs.getInt("userId"),
+                    rs.getString("fullName"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getLong("userPhone"),
+                    rs.getString("city"),
+                    rs.getInt("pinCode")
+            );
+        } catch (SQLException e) {
+            throw new DAOException("Failed to map ResultSet to User object.", e);
         }
     }
 }
