@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div class="container">
+    <div class="dashboard-header">
+        <h1>Customer Dashboard</h1>
+        <button id="logout-btn" class="btn btn-secondary">Logout</button>
+    </div>
+
+    <div class="dashboard-menu">
+        <button class="btn btn-default" data-action="viewCenters">View Gym Centers</button>
+        <button class="btn btn-default" data-action="viewBookedSlots">View Booked Slots</button>
+        <button class="btn btn-default" data-action="balance">Check My Balance</button>
+        <button class="btn btn-default" data-action="addWallet">Add Money to Wallet</button>
+        <button class="btn btn-default" data-action="bookSlot">Book a Slot</button>
+        <button class="btn btn-default" data-action="editDetails">Edit My Details</button>
+        <button class="btn btn-default" data-action="editPaymentDetails">Edit Payment Details</button>
+    </div>
+
+    <div id="dashboard-content">
+        <!-- Dynamic content will be loaded here -->
+    </div>
+</div>
+<script src="scripts/customer.js"></script>
+</body>
+</html>

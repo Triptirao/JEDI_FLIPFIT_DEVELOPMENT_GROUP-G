@@ -37,6 +37,8 @@ public class AdminDAO {
     private static final String DELETE_GYM_OWNER_BY_USER_ID = "DELETE FROM GymOwner WHERE ownerId = ?";
     private static final String DELETE_ADMIN_BY_USER_ID = "DELETE FROM Admin WHERE adminId = ?";
     private static final String DELETE_USER = "DELETE FROM User WHERE userId = ?";
+    private static final String DELETE_SLOTS_BY_GYM_ID = "DELETE FROM Slot WHERE gymId = ?";
+    private static final String DELETE_BOOKINGS_BY_GYM_ID = "DELETE FROM Booking WHERE gymId = ?";
 
     /**
      * Constructs an AdminDAO with necessary DAO dependencies.
@@ -246,6 +248,28 @@ public class AdminDAO {
             }
         } catch (SQLException e) {
             throw new DAOException("Failed to delete gym with ID: " + gymId, e);
+        }
+    }
+
+    // NEW: Deletes all slots associated with a gym
+    public void deleteSlotsByGymId(int gymId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(DELETE_SLOTS_BY_GYM_ID)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DAOException("Failed to delete slots for gym ID: " + gymId, e);
+        }
+    }
+
+    // NEW: Deletes all bookings associated with a gym
+    public void deleteBookingsByGymId(int gymId) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(DELETE_BOOKINGS_BY_GYM_ID)) {
+            ps.setInt(1, gymId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DAOException("Failed to delete bookings for gym ID: " + gymId, e);
         }
     }
 

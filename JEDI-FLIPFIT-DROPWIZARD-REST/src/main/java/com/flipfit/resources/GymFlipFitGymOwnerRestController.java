@@ -15,6 +15,7 @@ import com.flipfit.exception.AccessDeniedException;
 import com.flipfit.exception.AuthenticationException;
 import com.flipfit.exception.DuplicateEntryException;
 import com.flipfit.exception.MismatchinputException;
+import com.flipfit.exception.MissingValueException; // <-- Added this import
 import com.flipfit.exception.UnableToDeleteUserException;
 
 import javax.ws.rs.*;
@@ -43,8 +44,12 @@ public class GymFlipFitGymOwnerRestController {
         try {
             gymOwnerService.addCentre(gymCentre);
             return Response.ok("Gym Centre " + gymCentre.getCentreName() + " added successfully.").build();
-        } catch (AccessDeniedException | AuthenticationException e) {
+        } catch (AccessDeniedException e) {
             return Response.status(Response.Status.FORBIDDEN).entity("Error: " + e.getMessage()).build();
+        } catch (AuthenticationException | MissingValueException e) { // Updated to catch MissingValueException
+            return Response.status(Response.Status.BAD_REQUEST).entity("Error: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occurred: " + e.getMessage()).build();
         }
     }
 

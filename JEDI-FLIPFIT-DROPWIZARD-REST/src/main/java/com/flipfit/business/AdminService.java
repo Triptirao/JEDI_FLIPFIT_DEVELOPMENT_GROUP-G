@@ -225,8 +225,12 @@ public class AdminService implements adminInterface {
     @Override
     public void deleteGymById(int gymId) throws MismatchinputException {
         try {
+            // First, delete dependent records
+            adminDao.deleteSlotsByGymId(gymId);
+            adminDao.deleteBookingsByGymId(gymId);
+
+            // Then, delete the gym itself
             adminDao.deleteGym(gymId);
-            System.out.println("Gym with ID: " + gymId + " deleted successfully.");
         } catch (Exception e) {
             throw new MismatchinputException("Failed to delete gym with ID " + gymId + ". " + e.getMessage());
         }

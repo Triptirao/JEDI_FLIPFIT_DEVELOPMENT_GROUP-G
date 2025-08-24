@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlipFit - Login/Registration</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center">Welcome to FlipFit</h1>
+    <div id="message" class="text-center"></div>
+
+    <!-- Login Form -->
+    <div id="login-form-container">
+        <h2 class="text-center">User Login</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <p class="text-center">
+            Don't have an account? <a href="#" id="show-registration">Register here</a>
+        </p>
+    </div>
+
+    <!-- Registration Forms (initially hidden) -->
+    <div id="registration-form-container" class="hidden">
+        <h2 class="text-center">Registration</h2>
+        <div class="registration-tabs">
+            <button id="show-customer-reg" class="btn btn-secondary">Register as Customer</button>
+            <button id="show-owner-reg" class="btn btn-secondary">Register as Gym Owner</button>
+        </div>
+
+        <!-- Customer Registration Form -->
+        <form id="customer-reg-form" class="hidden">
+            <div class="form-group">
+                <label for="cust-fullName">Full Name:</label>
+                <input type="text" id="cust-fullName" name="fullName" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-email">Email:</label>
+                <input type="email" id="cust-email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-password">Password:</label>
+                <input type="password" id="cust-password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-phone">Phone:</label>
+                <input type="text" id="cust-phone" name="userPhone" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-city">City:</label>
+                <input type="text" id="cust-city" name="city" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-pincode">Pin Code:</label>
+                <input type="number" id="cust-pincode" name="pinCode" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-paymentType">Payment Type (1 for Card, 2 for UPI):</label>
+                <input type="number" id="cust-paymentType" name="paymentType" required>
+            </div>
+            <div class="form-group">
+                <label for="cust-paymentInfo">Payment Info:</label>
+                <input type="text" id="cust-paymentInfo" name="paymentInfo" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+
+        <!-- Gym Owner Registration Form -->
+        <form id="owner-reg-form" class="hidden">
+            <div class="form-group">
+                <label for="owner-fullName">Full Name:</label>
+                <input type="text" id="owner-fullName" name="fullName" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-email">Email:</label>
+                <input type="email" id="owner-email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-password">Password:</label>
+                <input type="password" id="owner-password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-phone">Phone:</label>
+                <input type="text" id="owner-phone" name="userPhone" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-city">City:</label>
+                <input type="text" id="owner-city" name="city" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-pincode">Pin Code:</label>
+                <input type="number" id="owner-pincode" name="pinCode" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-aadhaar">Aadhaar:</label>
+                <input type="text" id="owner-aadhaar" name="aadhaar" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-pan">PAN:</label>
+                <input type="text" id="owner-pan" name="pan" required>
+            </div>
+            <div class="form-group">
+                <label for="owner-gst">GST:</label>
+                <input type="text" id="owner-gst" name="gst" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+
+        <p class="text-center">
+            <a href="#" id="back-to-login">Back to Login</a>
+        </p>
+    </div>
+
+    <!-- Dashboard containers are in separate files -->
+</div>
+<script src="scripts/app.js"></script>
+</body>
+</html>

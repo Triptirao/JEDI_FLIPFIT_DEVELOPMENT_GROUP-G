@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div class="container">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <button id="logout-btn" class="btn btn-secondary">Logout</button>
+    </div>
+
+    <div class="dashboard-menu">
+        <button class="btn btn-default" data-action="gyms">View All Gyms</button>
+        <button class="btn btn-default" data-action="gyms/pending">View Pending Gyms</button>
+        <button class="btn btn-default" data-action="gymowners">View All Gym Owners</button>
+        <button class="btn btn-default" data-action="gymowners/pending">View Pending Gym Owners</button>
+        <button class="btn btn-default" data-action="customers">View All Customers</button>
+        <button class="btn btn-default" data-action="approve-owner">Approve Gym Owner</button>
+        <button class="btn btn-default" data-action="approve-gym">Approve Gym Centre</button>
+        <button class="btn btn-default" data-action="delete-user">Delete User</button>
+        <button class="btn btn-default" data-action="delete-gym">Delete Gym</button>
+    </div>
+
+    <div id="dashboard-content">
+        <!-- Dynamic content will be loaded here -->
+    </div>
+</div>
+<script src="scripts/admin.js"></script>
+</body>
+</html>
