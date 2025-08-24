@@ -8,6 +8,7 @@ import com.flipfit.dao.CustomerDAO;
 import com.flipfit.dao.GymOwnerDAO;
 import com.flipfit.dao.UserDAO;
 import com.flipfit.exception.*;
+import com.flipfit.bean.Customer;
 
 import java.util.List;
 import java.util.Optional;
@@ -218,6 +219,7 @@ public class AdminService implements adminInterface {
         }
     }
 
+
     /**
      * Deletes a gym from the system by its ID.
      * @param gymId The ID of the gym to delete.
@@ -225,12 +227,8 @@ public class AdminService implements adminInterface {
     @Override
     public void deleteGymById(int gymId) throws MismatchinputException {
         try {
-            // First, delete dependent records
-            adminDao.deleteSlotsByGymId(gymId);
-            adminDao.deleteBookingsByGymId(gymId);
-
             // Then, delete the gym itself
-            adminDao.deleteGym(gymId);
+            adminDao.deleteGymById(gymId);
         } catch (Exception e) {
             throw new MismatchinputException("Failed to delete gym with ID " + gymId + ". " + e.getMessage());
         }
