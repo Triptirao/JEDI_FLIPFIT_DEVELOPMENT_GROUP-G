@@ -39,6 +39,11 @@ public class GymFlipFitCustomerRestController {
             new GymOwnerDAO()
     );
 
+    @OPTIONS
+    @Path("{path: .*}")
+    public Response handleOptions() {
+        return Response.ok().build();
+    }
     /**
      * Endpoint to view a customer's booked slots.
      * @param customerId The ID of the customer, passed as a path parameter.

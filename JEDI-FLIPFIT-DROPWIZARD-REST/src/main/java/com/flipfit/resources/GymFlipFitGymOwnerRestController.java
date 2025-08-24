@@ -38,6 +38,12 @@ public class GymFlipFitGymOwnerRestController {
             new GymOwnerDAO()
     );
 
+    @OPTIONS
+    @Path("{path: .*}")
+    public Response handleOptions() {
+        return Response.ok().build();
+    }
+
     @POST
     @Path("/centres/add")
     public Response addCentre(GymCentre gymCentre) {

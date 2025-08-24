@@ -33,6 +33,12 @@ public class GymFlipFitAdminRestController {
             new AdminDAO(userDao,customerDao,gymOwnerDao), userDao,customerDao,gymOwnerDao
     );
 
+    @OPTIONS
+    @Path("{path: .*}")
+    public Response handleOptions() {
+        return Response.ok().build();
+    }
+
     @GET
     @Path("/gyms")
     public Response viewAllGyms() {

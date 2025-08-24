@@ -100,35 +100,50 @@ function handleAdminActions() {
                 let identifier;
                 let apiUrl;
 
-                if (action.includes('approve-')) {
-                    identifier = prompt(`Enter ${action.includes('owner') ? 'owner email' : 'gym ID'}:`);
+                // Corrected logic to build the API URL based on the action
+                if (action === 'approve-owner') {
+                    identifier = prompt('Enter owner email:');
                     if (!identifier) {
-                        dashboardContentDiv.innerHTML = `<p class="error">Action cancelled.</p>`;
+                        dashboardContentDiv.innerHTML = '<p class="error">Action cancelled.</p>';
                         return;
                     }
-                    apiUrl = `/admin/${action.replace('-', '/')}/${identifier}`;
-                    data = await apiFetch('POST', apiUrl);
-                } else if (action.includes('delete-')) {
-                    identifier = prompt(`Enter ${action.includes('user') ? 'user ID' : 'gym ID'}:`);
+                    apiUrl = `/admin/gymowners/approve/${identifier}`;
+                } else if (action === 'approve-gym') {
+                    identifier = prompt('Enter gym ID:');
                     if (!identifier) {
-                        dashboardContentDiv.innerHTML = `<p class="error">Action cancelled.</p>`;
+                        dashboardContentDiv.innerHTML = '<p class="error">Action cancelled.</p>';
                         return;
                     }
-                    apiUrl = `/admin/${action.replace('-', '/')}/${identifier}`;
-                    data = await apiFetch('DELETE', apiUrl);
+                    apiUrl = `/admin/gyms/approve/${identifier}`;
+                } else if (action === 'delete-user') {
+                    identifier = prompt('Enter user ID:');
+                    if (!identifier) {
+                        dashboardContentDiv.innerHTML = '<p class="error">Action cancelled.</p>';
+                        return;
+                    }
+                    apiUrl = `/admin/users/${identifier}`;
+                } else if (action === 'delete-gym') {
+                    identifier = prompt('Enter gym ID:');
+                    if (!identifier) {
+                        dashboardContentDiv.innerHTML = '<p class="error">Action cancelled.</p>';
+                        return;
+                    }
+                    apiUrl = `/admin/gyms/${identifier}`;
                 } else {
+                    // For GET requests like viewing all gyms or customers
                     apiUrl = `/admin/${action}`;
+                }
+
+                if (action.includes('approve') || action.includes('delete')) {
+                    data = await apiFetch(action.includes('approve') ? 'POST' : 'DELETE', apiUrl);
+                } else {
                     data = await apiFetch('GET', apiUrl);
                 }
 
-                if (identifier === null) {
-                    dashboardContentDiv.innerHTML = '';
+                if (Array.isArray(data)) {
+                    dashboardContentDiv.innerHTML = `<div class="table-container">${createTable(data, action)}</div>`;
                 } else {
-                    if (Array.isArray(data)) {
-                        dashboardContentDiv.innerHTML = `<div class="table-container">${createTable(data, action)}</div>`;
-                    } else {
-                        dashboardContentDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-                    }
+                    dashboardContentDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 }
             } catch (error) {
                 dashboardContentDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;

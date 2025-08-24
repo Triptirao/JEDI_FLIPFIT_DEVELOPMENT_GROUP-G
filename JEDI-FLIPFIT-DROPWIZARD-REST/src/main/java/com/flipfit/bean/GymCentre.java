@@ -87,7 +87,7 @@ public class GymCentre {
         this.centreId = centreId;
         this.ownerId = ownerId;
         this.centreName = centreName;
-        this.slots = slots;
+        this.slots = "6";
         this.capacity = capacity;
         this.cost = cost;
         this.approved = approved;
@@ -115,7 +115,7 @@ public class GymCentre {
     public GymCentre(int ownerId, String centreName, String slots, int capacity, int cost, boolean approved, String city, String state, String pincode, String facilities) {
         this.ownerId = ownerId;
         this.centreName = centreName;
-        this.slots = slots;
+        this.slots = "6";
         this.capacity = capacity;
         this.cost = cost;
         this.approved = approved;

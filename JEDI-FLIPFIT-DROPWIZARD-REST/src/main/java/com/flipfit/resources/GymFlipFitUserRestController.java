@@ -25,6 +25,12 @@ public class GymFlipFitUserRestController {
             new UserDAO(), new CustomerDAO(), new GymOwnerDAO()
     );
 
+    @OPTIONS
+    @Path("{path: .*}")
+    public Response handleOptions() {
+        return Response.ok().build();
+    }
+
     @POST
     @Path("/login")
     public Response login(User user) {
